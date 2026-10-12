@@ -1,17 +1,11 @@
-//
-//  SiteWorkforceMonitoringApp.swift
-//  SiteWorkforceMonitoring
-//
-//  Created by Student2 on 2026-10-12.
-//
 
 import SwiftUI
 
 @main
-struct SiteWorkforceMonitoringApp: App {
+struct SiteWorkforceProjectApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppStartView()
         }
     }
 }
