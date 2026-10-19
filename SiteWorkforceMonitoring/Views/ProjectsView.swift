@@ -1,4 +1,3 @@
-
 import SwiftUI
 import MapKit
 
@@ -20,7 +19,7 @@ struct ProjectsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
 
-                    // Header
+                    
                     VStack(alignment: .leading, spacing: 5) {
                         Text("Projects")
                             .font(.largeTitle.bold())
@@ -29,7 +28,7 @@ struct ProjectsView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    // Summary cards
+                    
                     LazyVGrid(columns: columns, spacing: 12) {
                         summaryCard(
                             title: "Total Projects",
@@ -60,7 +59,7 @@ struct ProjectsView: View {
                         )
                     }
 
-                    // Search
+                    
                     HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(.secondary)
@@ -74,7 +73,7 @@ struct ProjectsView: View {
                     .background(Color(.secondarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                    // Status filters
+                    
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(
@@ -105,7 +104,7 @@ struct ProjectsView: View {
                         }
                     }
 
-                    // Project directory
+                  
                     HStack {
                         Text("Project Directory")
                             .font(.title2.bold())
@@ -117,9 +116,13 @@ struct ProjectsView: View {
                             .foregroundStyle(.secondary)
                     }
 
+                 
                     LazyVGrid(columns: columns, spacing: 14) {
                         ForEach(viewModel.filteredProjects) { project in
-                            projectCard(project)
+                            NavigationLink(destination: ProjectDetailView(project: project)) {
+                                projectCard(project)
+                            }
+                            .buttonStyle(.plain) // Keeps card styling intact without button tinting
                         }
                     }
 
@@ -142,7 +145,7 @@ struct ProjectsView: View {
         }
     }
 
-    // MARK: - Summary Card
+
 
     private func summaryCard(
         title: String,
@@ -175,7 +178,7 @@ struct ProjectsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    // MARK: - Project Card
+    
 
     private func projectCard(
         _ project: ConstructionProject
@@ -183,13 +186,28 @@ struct ProjectsView: View {
         VStack(alignment: .leading, spacing: 16) {
 
             HStack(alignment: .top) {
-                Image(systemName: "building.2.crop.circle.fill")
-                    .font(.system(size: 42))
-                    .foregroundStyle(orange)
+               
+                ZStack {
+                    if let uiImage = UIImage(named: project.imageName) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 48, height: 48)
+                            .clipShape(Circle())
+                    } else {
+                        Image(systemName: project.imageName.isEmpty ? "building.2.fill" : project.imageName)
+                            .font(.system(size: 26))
+                            .foregroundStyle(orange)
+                            .frame(width: 48, height: 48)
+                            .background(orange.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(project.name)
                         .font(.headline)
+                        .foregroundStyle(.primary)
 
                     Text(project.location)
                         .font(.subheadline)
@@ -202,16 +220,18 @@ struct ProjectsView: View {
                 statusBadge(project.status)
             }
 
-            // Progress
+           
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Project Progress")
                         .font(.subheadline)
+                        .foregroundStyle(.primary)
 
                     Spacer()
 
                     Text("\(Int(project.progress * 100))%")
                         .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
                 }
 
                 ProgressView(value: project.progress)
@@ -230,15 +250,16 @@ struct ProjectsView: View {
 
                 Spacer()
 
-                Image(systemName: "location.fill")
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(orange)
 
-                Text("View location")
+                Text("View Details")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(orange)
             }
 
-            // Static map preview
+         
             Map(
                 initialPosition: .region(
                     MKCoordinateRegion(
@@ -256,7 +277,7 @@ struct ProjectsView: View {
                 )
                 .tint(.orange)
             }
-            .frame(height: 150)
+            .frame(height: 140)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .allowsHitTesting(false)
         }
@@ -266,7 +287,7 @@ struct ProjectsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
-    // MARK: - Status Badge
+   
 
     private func statusBadge(_ status: String) -> some View {
         Text(status)

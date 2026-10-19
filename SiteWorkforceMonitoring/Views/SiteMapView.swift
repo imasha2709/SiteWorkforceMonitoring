@@ -3,6 +3,13 @@ import MapKit
 
 struct SiteMapView: View {
     @StateObject private var viewModel = SiteMapViewModel()
+    
+    // Map style state (Standard vs. Satellite/Hybrid for paths and roads)
+    @State private var mapStyleOption: MapStyleOption = .hybrid
+    
+    // State to control showing an attendance recording sheet
+    @State private var showingAttendanceSheet = false
+    @State private var selectedWorkerForAttendance = ""
 
     @State private var cameraPosition: MapCameraPosition =
         .region(
@@ -18,15 +25,12 @@ struct SiteMapView: View {
             )
         )
 
-    private let orange = Color(
-        red: 0.95,
-        green: 0.39,
-        blue: 0.10
-    )
+    private let orange = Color(red: 0.95, green: 0.39, blue: 0.10)
 
-    private let columns = [
-        GridItem(.adaptive(minimum: 280), spacing: 12)
-    ]
+    enum MapStyleOption: String, CaseIterable {
+        case standard = "Standard"
+        case hybrid = "Satellite & Roads"
+    }
 
     var body: some View {
         NavigationStack {
@@ -34,15 +38,28 @@ struct SiteMapView: View {
                 VStack(alignment: .leading, spacing: 20) {
 
                     // Header
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Site Map")
-                            .font(.largeTitle.bold())
+                    HStack {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Site Map & Paths")
+                                .font(.largeTitle.bold())
 
-                        Text("Construction sites and attendance register")
-                            .foregroundStyle(.secondary)
+                            Text("Inspect site terrain, roads, and record attendance")
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        // Map Style Toggle (Satellite paths vs Standard)
+                        Picker("Map Style", selection: $mapStyleOption) {
+                            ForEach(MapStyleOption.allCases, id: \.self) { style in
+                                Text(style.rawValue).tag(style)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(width: 170)
                     }
 
-                    // Interactive map
+                    // Interactive Satellite / Standard Map
                     Map(position: $cameraPosition) {
                         ForEach(viewModel.projects) { project in
                             Annotation(
@@ -54,172 +71,74 @@ struct SiteMapView: View {
                             }
                         }
                     }
-                    .frame(height: 330)
+                    .mapStyle(mapStyleOption == .hybrid ? .hybrid(elevation: .realistic) : .standard)
+                    .frame(height: 360)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
-
-                    Text("Select a construction site")
-                        .font(.title2.bold())
-
-                    // Site selector
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            Button {
-                                viewModel.selectedProjectName = nil
-                            } label: {
-                                Text("All Sites")
-                                    .font(.subheadline.weight(.medium))
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 10)
-                                    .background(
-                                        viewModel.selectedProjectName == nil
-                                        ? orange
-                                        : Color(.secondarySystemBackground)
-                                    )
-                                    .foregroundStyle(
-                                        viewModel.selectedProjectName == nil
-                                        ? .white
-                                        : .primary
-                                    )
-                                    .clipShape(Capsule())
-                            }
-                            .buttonStyle(.plain)
-
-                            ForEach(viewModel.projects) { project in
-                                Button {
-                                    selectProject(project)
-                                } label: {
-                                    Text(project.name)
-                                        .font(.subheadline.weight(.medium))
-                                        .padding(.horizontal, 14)
-                                        .padding(.vertical, 10)
-                                        .background(
-                                            viewModel.selectedProjectName == project.name
-                                            ? orange
-                                            : Color(.secondarySystemBackground)
-                                        )
-                                        .foregroundStyle(
-                                            viewModel.selectedProjectName == project.name
-                                            ? .white
-                                            : .primary
-                                        )
-                                        .clipShape(Capsule())
-                                }
-                                .buttonStyle(.plain)
-                            }
+                    .overlay(alignment: .topTrailing) {
+                        // Quick action badge over map
+                        Button {
+                            showingAttendanceSheet = true
+                        } label: {
+                            Label("Mark Attendance", systemImage: "checkmark.circle.badge.plus")
+                                .font(.subheadline.bold())
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(.regularMaterial)
+                                .clipShape(Capsule())
                         }
+                        .padding(12)
+                        .buttonStyle(.plain)
                     }
 
-                    // Selected project details
+                    // Selected project details & quick actions
                     if let project = viewModel.selectedProject {
-                        projectDetails(project)
+                        projectDetailsWithActions(project)
                     } else {
                         allSitesSummary
                     }
 
                     Divider()
 
-                    // Attendance register
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Attendance Register")
-                            .font(.title2.bold())
-
-                        Text(
-                            viewModel.selectedProjectName ??
-                            "Showing records from all sites"
-                        )
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    }
-
-                    // Search
-                    HStack(spacing: 10) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.secondary)
-
-                        TextField(
-                            "Search worker or site",
-                            text: $viewModel.searchText
-                        )
-                    }
-                    .padding(12)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                    // Attendance filters
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(
-                                viewModel.statusOptions,
-                                id: \.self
-                            ) { status in
-                                Button {
-                                    viewModel.selectedStatus = status
-                                } label: {
-                                    Text(status)
-                                        .font(.subheadline.weight(.medium))
-                                        .padding(.horizontal, 14)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            viewModel.selectedStatus == status
-                                            ? orange
-                                            : Color(.secondarySystemBackground)
-                                        )
-                                        .foregroundStyle(
-                                            viewModel.selectedStatus == status
-                                            ? .white
-                                            : .primary
-                                        )
-                                        .clipShape(Capsule())
-                                }
-                                .buttonStyle(.plain)
-                            }
+                    // Attendance Register preview for selected site
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Live Attendance Log")
+                                .font(.title2.bold())
+                            Text(viewModel.selectedProjectName ?? "All Sites")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
+                        
+                        Spacer()
+                        
+                        Button {
+                            showingAttendanceSheet = true
+                        } label: {
+                            Label("New Check-in", systemImage: "plus")
+                                .font(.subheadline.bold())
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(orange)
+                                .foregroundStyle(.white)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
                     }
 
-                    // Attendance summary
-                    LazyVGrid(columns: columns, spacing: 10) {
-                        attendanceCount(
-                            "Present",
-                            count: viewModel.count(for: .present),
-                            color: .green
-                        )
-
-                        attendanceCount(
-                            "Late",
-                            count: viewModel.count(for: .late),
-                            color: .orange
-                        )
-
-                        attendanceCount(
-                            "Absent",
-                            count: viewModel.count(for: .absent),
-                            color: .red
-                        )
-                    }
-
-                    // Register rows
+                    // Attendance rows
                     if viewModel.filteredAttendance.isEmpty {
                         ContentUnavailableView(
-                            "No Attendance Records",
+                            "No Records",
                             systemImage: "person.crop.rectangle",
-                            description: Text(
-                                "Try another site, search term, or status."
-                            )
+                            description: Text("No attendance logged for this site yet.")
                         )
-                        .frame(maxWidth: .infinity)
                     } else {
                         LazyVStack(spacing: 10) {
-                            ForEach(
-                                viewModel.filteredAttendance
-                            ) { record in
+                            ForEach(viewModel.filteredAttendance) { record in
                                 attendanceRow(record)
                             }
                         }
                     }
-
-                    Text("Demo data only. Attendance is not saved.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
                 .padding()
                 .frame(maxWidth: 1100)
@@ -227,10 +146,11 @@ struct SiteMapView: View {
             }
             .navigationTitle("Site Map")
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showingAttendanceSheet) {
+                QuickAttendanceCheckInView(siteName: viewModel.selectedProjectName ?? "Colombo Tower")
+            }
         }
     }
-
-    // MARK: - Map Annotation Builder (Prevents type-checking timeout)
 
     @ViewBuilder
     private func mapAnnotationButton(for project: ConstructionProject) -> some View {
@@ -244,20 +164,14 @@ struct SiteMapView: View {
                         ? "building.2.crop.circle.fill"
                         : "mappin.circle.fill"
                 )
-                .font(
-                    .system(
-                        size: viewModel.selectedProjectName == project.name ? 38 : 30
-                    )
-                )
-                .foregroundStyle(
-                    project.status == "Attention" ? .red : orange
-                )
+                .font(.system(size: viewModel.selectedProjectName == project.name ? 40 : 32))
+                .foregroundStyle(project.status == "Attention" ? .red : orange)
 
                 Text(project.name)
                     .font(.caption2.bold())
                     .lineLimit(1)
                     .fixedSize()
-                    .padding(.horizontal, 5)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(.regularMaterial)
                     .clipShape(Capsule())
@@ -266,29 +180,19 @@ struct SiteMapView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Select Site
-
     private func selectProject(_ project: ConstructionProject) {
         viewModel.selectedProjectName = project.name
-
         withAnimation {
             cameraPosition = .region(
                 MKCoordinateRegion(
                     center: project.coordinate,
-                    span: MKCoordinateSpan(
-                        latitudeDelta: 0.035,
-                        longitudeDelta: 0.035
-                    )
+                    span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
                 )
             )
         }
     }
 
-    // MARK: - Project Details
-
-    private func projectDetails(
-        _ project: ConstructionProject
-    ) -> some View {
+    private func projectDetailsWithActions(_ project: ConstructionProject) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Image(systemName: "building.2.fill")
@@ -296,89 +200,73 @@ struct SiteMapView: View {
                     .foregroundStyle(orange)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(project.name)
-                        .font(.headline)
-
-                    Text(project.location)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    Text(project.name).font(.headline)
+                    Text(project.location).font(.subheadline).foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
                 Text(project.status)
                     .font(.caption.bold())
-                    .foregroundStyle(
-                        project.status == "Attention" ? .red : .green
-                    )
+                    .foregroundStyle(project.status == "Attention" ? .red : .green)
                     .padding(8)
-                    .background(
-                        (project.status == "Attention"
-                        ? Color.red : Color.green).opacity(0.12)
-                    )
+                    .background((project.status == "Attention" ? Color.red : Color.green).opacity(0.12))
                     .clipShape(Capsule())
             }
 
+            Text(project.description)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
             HStack {
-                Text("Project progress")
+                Text("Progress")
                 Spacer()
-                Text("\(Int(project.progress * 100))%")
-                    .bold()
+                Text("\(Int(project.progress * 100))%").bold()
             }
             .font(.subheadline)
 
-            ProgressView(value: project.progress)
-                .tint(orange)
+            ProgressView(value: project.progress).tint(orange)
 
-            Label(
-                "\(project.workersAssigned) assigned workers",
-                systemImage: "person.3.fill"
-            )
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+            HStack(spacing: 12) {
+                Button {
+                    showingAttendanceSheet = true
+                } label: {
+                    Label("Mark Attendance", systemImage: "checkmark.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(12)
+                        .background(orange)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
 
-            Button {
-                let coordinate = project.coordinate
-                let mapItem = MKMapItem(
-                    placemark: MKPlacemark(coordinate: coordinate)
-                )
-                mapItem.name = project.name
-                mapItem.openInMaps()
-            } label: {
-                Label("Open in Apple Maps", systemImage: "map")
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(orange.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                Button {
+                    let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: project.coordinate))
+                    mapItem.name = project.name
+                    mapItem.openInMaps()
+                } label: {
+                    Label("Directions", systemImage: "map")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(12)
+                        .background(orange.opacity(0.12))
+                        .foregroundStyle(orange)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
-            .tint(orange)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
-
-    // MARK: - All Sites Summary
 
     private var allSitesSummary: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("All Construction Sites")
-                .font(.headline)
-
-            Text("\(viewModel.projects.count) sites")
-                .foregroundStyle(.secondary)
-
-            Text(
-                "\(viewModel.projects.reduce(0) { $0 + $1.workersAssigned }) assigned workers across the listed projects"
-            )
-            .font(.subheadline)
-
-            Text("Select a site marker to see its details and attendance.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("All Construction Sites Overview").font(.headline)
+            Text("\(viewModel.projects.count) active sites with satellite tracking enabled.").font(.subheadline).foregroundStyle(.secondary)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -386,79 +274,30 @@ struct SiteMapView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    // MARK: - Attendance Count
-
-    private func attendanceCount(
-        _ title: String,
-        count: Int,
-        color: Color
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text("\(count)")
-                .font(.title2.bold())
-
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(color)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    // MARK: - Attendance Row
-
-    private func attendanceRow(
-        _ record: AttendanceRecord
-    ) -> some View {
+    private func attendanceRow(_ record: AttendanceRecord) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "person.crop.circle.fill")
                 .font(.system(size: 36))
                 .foregroundStyle(orange)
 
-            VStack(alignment: .leading, spacing: 5) {
-                Text(record.workerName)
-                    .font(.headline)
-
-                Text(record.site)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Label(
-                    "Check-in: \(record.checkIn)",
-                    systemImage: "clock"
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(record.workerName).font(.headline)
+                Text(record.site).font(.caption).foregroundStyle(.secondary)
+                Text("Check-in: \(record.checkIn)").font(.caption2).foregroundStyle(.secondary)
             }
 
-            Spacer(minLength: 4)
+            Spacer()
 
             Text(record.status.rawValue)
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(statusColor(record.status))
                 .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(statusColor(record.status).opacity(0.12))
+                .padding(.vertical, 5)
+                .background(record.status == .present ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
+                .foregroundStyle(record.status == .present ? .green : .orange)
                 .clipShape(Capsule())
         }
         .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-
-    // MARK: - Status Color (Fixed to AttendanceStatus)
-
-    private func statusColor(_ status: AttendanceStatus) -> Color {
-        switch status {
-        case .present:
-            return .green
-        case .late:
-            return .orange
-        case .absent:
-            return .red
-        }
     }
 }

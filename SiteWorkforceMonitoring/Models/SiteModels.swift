@@ -26,23 +26,42 @@ struct Worker: Identifiable {
     }
 }
 
-struct ConstructionProject: Identifiable {
+struct ProjectTask: Identifiable, Codable {
+    let id = UUID()
+    let title: String
+    let isCompleted: Bool
+    let priority: String
+}
+
+struct ConstructionProject: Identifiable, Codable {
     let id: UUID
-    var name: String
-    var location: String
-    var progress: Double
-    var status: String
-    var workersAssigned: Int
-    var coordinate: CLLocationCoordinate2D
+    let name: String
+    let location: String
+    var latitude: Double
+    var longitude: Double
+    let progress: Double
+    let status: String
+    let workersAssigned: Int
+    let imageName: String
+    let description: String
+    let tasks: [ProjectTask]
     
-    init(id: UUID = UUID(), name: String, location: String, progress: Double, status: String, workersAssigned: Int, coordinate: CLLocationCoordinate2D) {
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+    
+    init(id: UUID = UUID(), name: String, location: String, coordinate: CLLocationCoordinate2D, progress: Double, status: String, workersAssigned: Int, imageName: String, description: String, tasks: [ProjectTask]) {
         self.id = id
         self.name = name
         self.location = location
+        self.latitude = coordinate.latitude
+        self.longitude = coordinate.longitude
         self.progress = progress
         self.status = status
         self.workersAssigned = workersAssigned
-        self.coordinate = coordinate
+        self.imageName = imageName
+        self.description = description
+        self.tasks = tasks
     }
 }
 
