@@ -1,4 +1,3 @@
-
 import Foundation
 import Combine
 
@@ -15,9 +14,7 @@ final class AuthenticationViewModel: ObservableObject {
             name: "Demo User",
             email: "demo@example.com",
             role: role,
-            assignedSite: role == .siteWorker
-                ? "Colombo Tower"
-                : nil
+            assignedSite: role == .siteWorker ? "Colombo Tower" : nil
         )
     }
 

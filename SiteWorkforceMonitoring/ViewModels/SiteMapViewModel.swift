@@ -38,7 +38,7 @@ final class SiteMapViewModel: ObservableObject {
         }
     }
 
-    // Fixed: Changed WorkerStatus to AttendanceStatus
+   
     func count(for status: AttendanceStatus) -> Int {
         attendance.filter { record in
             record.status == status &&

@@ -35,7 +35,7 @@ struct WorkersView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
 
-                    // Header
+                    
                     VStack(alignment: .leading, spacing: 5) {
                         Text("Workers")
                             .font(.largeTitle.bold())
@@ -44,7 +44,7 @@ struct WorkersView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    // Summary cards
+                    
                     LazyVGrid(
                         columns: columns,
                         spacing: 12
@@ -78,7 +78,7 @@ struct WorkersView: View {
                         )
                     }
 
-                    // Search
+                 
                     HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(.secondary)
@@ -96,7 +96,7 @@ struct WorkersView: View {
                         RoundedRectangle(cornerRadius: 12)
                     )
 
-                    // Status filters
+                    
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(
@@ -127,7 +127,7 @@ struct WorkersView: View {
                         }
                     }
 
-                    // Worker list
+                    
                     HStack {
                         Text("Worker Directory")
                             .font(.title2.bold())
@@ -161,7 +161,7 @@ struct WorkersView: View {
         }
     }
 
-    // MARK: - Summary Card
+    
 
     private func summaryCard(
         title: String,
@@ -194,8 +194,7 @@ struct WorkersView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    // MARK: - Worker Card
-
+    
     private func workerCard(_ worker: Worker) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
@@ -246,7 +245,7 @@ struct WorkersView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    // MARK: - Status Colors (Fixed to AttendanceStatus)
+
 
     private func statusColor(_ status: AttendanceStatus) -> Color {
         switch status {

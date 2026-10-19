@@ -10,7 +10,7 @@ struct ProjectDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 
-                // Header Image Banner
+                
                 ZStack(alignment: .bottomLeading) {
                     if let uiImage = UIImage(named: project.imageName) {
                         Image(uiImage: uiImage)
@@ -48,7 +48,7 @@ struct ProjectDetailView: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 16))
 
-                // Status & Progress Card
+             
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("Project Status")
@@ -88,7 +88,7 @@ struct ProjectDetailView: View {
                 .background(Color(.secondarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 16))
 
-                // Tasks Section
+          
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Milestones & Tasks")
                         .font(.title2.bold())

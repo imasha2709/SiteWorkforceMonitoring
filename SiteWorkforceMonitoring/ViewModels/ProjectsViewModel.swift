@@ -1,12 +1,11 @@
-
 import Foundation
 import Combine
+import CoreLocation
 
 final class ProjectsViewModel: ObservableObject {
     @Published var searchText = ""
     @Published var selectedStatus = "All"
-
-    let projects = SampleData.projects
+    @Published var projects = SampleData.projects
 
     let statusOptions = [
         "All",
@@ -43,5 +42,20 @@ final class ProjectsViewModel: ObservableObject {
 
     var projectsNeedingAttention: Int {
         projects.filter { $0.status == "Attention" }.count
+    }
+
+    func addProject(name: String, location: String, description: String, imageName: String, workersAssigned: Int, latitude: Double, longitude: Double) {
+        let newProject = ConstructionProject(
+            name: name,
+            location: location,
+            coordinate: CLLocationCoordinate2D(latitude: latitude, longitude: longitude),
+            progress: 0.0,
+            status: "On track",
+            workersAssigned: workersAssigned,
+            imageName: imageName.isEmpty ? "building.2.fill" : imageName,
+            description: description,
+            tasks: []
+        )
+        projects.append(newProject)
     }
 }

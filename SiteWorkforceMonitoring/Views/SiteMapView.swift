@@ -4,10 +4,10 @@ import MapKit
 struct SiteMapView: View {
     @StateObject private var viewModel = SiteMapViewModel()
     
-    // Map style state (Standard vs. Satellite/Hybrid for paths and roads)
+    
     @State private var mapStyleOption: MapStyleOption = .hybrid
     
-    // State to control showing an attendance recording sheet
+   
     @State private var showingAttendanceSheet = false
     @State private var selectedWorkerForAttendance = ""
 
@@ -37,7 +37,7 @@ struct SiteMapView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
 
-                    // Header
+                  
                     HStack {
                         VStack(alignment: .leading, spacing: 5) {
                             Text("Site Map & Paths")
@@ -49,7 +49,7 @@ struct SiteMapView: View {
                         
                         Spacer()
                         
-                        // Map Style Toggle (Satellite paths vs Standard)
+                        
                         Picker("Map Style", selection: $mapStyleOption) {
                             ForEach(MapStyleOption.allCases, id: \.self) { style in
                                 Text(style.rawValue).tag(style)
@@ -59,7 +59,7 @@ struct SiteMapView: View {
                         .frame(width: 170)
                     }
 
-                    // Interactive Satellite / Standard Map
+               
                     Map(position: $cameraPosition) {
                         ForEach(viewModel.projects) { project in
                             Annotation(
@@ -75,7 +75,7 @@ struct SiteMapView: View {
                     .frame(height: 360)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
                     .overlay(alignment: .topTrailing) {
-                        // Quick action badge over map
+                        
                         Button {
                             showingAttendanceSheet = true
                         } label: {
@@ -90,7 +90,7 @@ struct SiteMapView: View {
                         .buttonStyle(.plain)
                     }
 
-                    // Selected project details & quick actions
+                  
                     if let project = viewModel.selectedProject {
                         projectDetailsWithActions(project)
                     } else {
@@ -99,7 +99,7 @@ struct SiteMapView: View {
 
                     Divider()
 
-                    // Attendance Register preview for selected site
+               
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Live Attendance Log")
@@ -125,7 +125,7 @@ struct SiteMapView: View {
                         .buttonStyle(.plain)
                     }
 
-                    // Attendance rows
+                   
                     if viewModel.filteredAttendance.isEmpty {
                         ContentUnavailableView(
                             "No Records",
