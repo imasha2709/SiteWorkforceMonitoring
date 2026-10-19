@@ -1,8 +1,12 @@
-//
-//  WorkerRepository.swift
-//  SiteWorkforceMonitoring
-//
-//  Created by Student2 on 2026-10-12.
-//
 
 import Foundation
+
+protocol WorkerRepository {
+    func fetchWorkers() async throws -> [Worker]
+}
+
+struct SampleWorkerRepository: WorkerRepository {
+    func fetchWorkers() async throws -> [Worker] {
+        SampleData.workers
+    }
+}

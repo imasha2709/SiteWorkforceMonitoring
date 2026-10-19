@@ -4,7 +4,7 @@ import SwiftUI
 struct SiteWorkforceMonitoringApp: App {
     var body: some Scene {
         WindowGroup {
-            SiteWorkforceMonitoringAppView() 
+            SplashView()
         }
     }
 }
