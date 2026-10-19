@@ -1,11 +1,10 @@
-
 import SwiftUI
 
 @main
-struct SiteWorkforceProjectApp: App {
+struct SiteWorkforceMonitoringApp: App {
     var body: some Scene {
         WindowGroup {
-            AppStartView()
+            SiteWorkforceMonitoringAppView() 
         }
     }
 }
