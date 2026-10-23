@@ -1,9 +1,8 @@
-
 import SwiftUI
 
 struct MainTabView: View {
-    @StateObject private var authentication =
-        AuthenticationViewModel()
+    @EnvironmentObject var authentication: AuthenticationViewModel
+    @State private var showingSettings = false
 
     var body: some View {
         Group {
@@ -15,52 +14,48 @@ struct MainTabView: View {
                                 Label("Dashboard", systemImage: "house.fill")
                             }
 
-                        if user.role.canViewWorkers {
-                            WorkersView()
-                                .tabItem {
-                                    Label("Workers", systemImage: "person.3.fill")
-                                }
-                        }
+                        WorkersView()
+                            .tabItem {
+                                Label("Workers", systemImage: "person.3.fill")
+                            }
 
                         AttendanceView()
                             .tabItem {
                                 Label("Attendance", systemImage: "calendar")
                             }
 
-                        if user.role.canViewAllProjects ||
-                            user.role == .siteSupervisor {
-                            ProjectsView()
-                                .tabItem {
-                                    Label("Projects", systemImage: "building.2.fill")
-                                }
-                        }
+                        ProjectsView()
+                            .tabItem {
+                                Label("Projects", systemImage: "building.2.fill")
+                            }
 
                         SiteMapView()
                             .tabItem {
                                 Label("Site Map", systemImage: "map.fill")
                             }
                     }
+                    // ✅ Settings Gear Icon Button in top right corner
                     .overlay(alignment: .topTrailing) {
-                        Menu {
-                            Text(user.name)
-                            Text(user.role.rawValue)
-
-                            Button("Sign Out", role: .destructive) {
-                                authentication.signOut()
-                            }
+                        Button {
+                            showingSettings.toggle()
                         } label: {
-                            Image(systemName: "person.crop.circle")
+                            Image(systemName: "gearshape.fill")
                                 .font(.title2)
                                 .foregroundStyle(.orange)
                                 .padding()
                         }
                     }
+                    .sheet(isPresented: $showingSettings) {
+                        SettingsView()
+                            .environmentObject(authentication)
+                    }
+                } else {
+                    ProgressView("Loading user profile...")
                 }
             } else {
                 LoginView()
             }
         }
-        .environmentObject(authentication)
         .tint(.orange)
     }
 }

@@ -1,29 +1,18 @@
 import SwiftUI
 import MapKit
+import FirebaseCore
 
 struct SiteMapView: View {
     @StateObject private var viewModel = SiteMapViewModel()
-    
-    
     @State private var mapStyleOption: MapStyleOption = .hybrid
-    
-   
     @State private var showingAttendanceSheet = false
-    @State private var selectedWorkerForAttendance = ""
 
-    @State private var cameraPosition: MapCameraPosition =
-        .region(
-            MKCoordinateRegion(
-                center: CLLocationCoordinate2D(
-                    latitude: 6.94,
-                    longitude: 79.88
-                ),
-                span: MKCoordinateSpan(
-                    latitudeDelta: 0.18,
-                    longitudeDelta: 0.18
-                )
-            )
+    @State private var cameraPosition: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 6.94, longitude: 79.88),
+            span: MKCoordinateSpan(latitudeDelta: 0.18, longitudeDelta: 0.18)
         )
+    )
 
     private let orange = Color(red: 0.95, green: 0.39, blue: 0.10)
 
@@ -37,7 +26,6 @@ struct SiteMapView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
 
-                  
                     HStack {
                         VStack(alignment: .leading, spacing: 5) {
                             Text("Site Map & Paths")
@@ -49,7 +37,6 @@ struct SiteMapView: View {
                         
                         Spacer()
                         
-                        
                         Picker("Map Style", selection: $mapStyleOption) {
                             ForEach(MapStyleOption.allCases, id: \.self) { style in
                                 Text(style.rawValue).tag(style)
@@ -59,7 +46,6 @@ struct SiteMapView: View {
                         .frame(width: 170)
                     }
 
-               
                     Map(position: $cameraPosition) {
                         ForEach(viewModel.projects) { project in
                             Annotation(
@@ -75,7 +61,6 @@ struct SiteMapView: View {
                     .frame(height: 360)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
                     .overlay(alignment: .topTrailing) {
-                        
                         Button {
                             showingAttendanceSheet = true
                         } label: {
@@ -90,7 +75,6 @@ struct SiteMapView: View {
                         .buttonStyle(.plain)
                     }
 
-                  
                     if let project = viewModel.selectedProject {
                         projectDetailsWithActions(project)
                     } else {
@@ -99,7 +83,6 @@ struct SiteMapView: View {
 
                     Divider()
 
-               
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Live Attendance Log")
@@ -125,7 +108,6 @@ struct SiteMapView: View {
                         .buttonStyle(.plain)
                     }
 
-                   
                     if viewModel.filteredAttendance.isEmpty {
                         ContentUnavailableView(
                             "No Records",
@@ -159,8 +141,7 @@ struct SiteMapView: View {
         } label: {
             VStack(spacing: 3) {
                 Image(
-                    systemName:
-                        viewModel.selectedProjectName == project.name
+                    systemName: viewModel.selectedProjectName == project.name
                         ? "building.2.crop.circle.fill"
                         : "mappin.circle.fill"
                 )
@@ -214,7 +195,7 @@ struct SiteMapView: View {
                     .clipShape(Capsule())
             }
 
-            Text(project.description)
+            Text(project.description ?? "No description available.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -266,7 +247,9 @@ struct SiteMapView: View {
     private var allSitesSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("All Construction Sites Overview").font(.headline)
-            Text("\(viewModel.projects.count) active sites with satellite tracking enabled.").font(.subheadline).foregroundStyle(.secondary)
+            Text("\(viewModel.projects.count) active sites with satellite tracking enabled.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -282,8 +265,17 @@ struct SiteMapView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(record.workerName).font(.headline)
-                Text(record.site).font(.caption).foregroundStyle(.secondary)
-                Text("Check-in: \(record.checkIn)").font(.caption2).foregroundStyle(.secondary)
+                Text("Site: \(record.siteId)").font(.caption).foregroundStyle(.secondary)
+                
+                if let checkIn = record.checkIn {
+                    Text("Check-in: \(checkIn.dateValue().formatted(date: .omitted, time: .shortened))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Check-in: N/A")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Spacer()

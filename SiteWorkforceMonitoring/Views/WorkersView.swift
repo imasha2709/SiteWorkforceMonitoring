@@ -3,16 +3,9 @@ import SwiftUI
 struct WorkersView: View {
     @StateObject private var viewModel = WorkersViewModel()
     @EnvironmentObject var authentication: AuthenticationViewModel
+    @State private var showingAddWorker = false
 
-    private let orange = Color(
-        red: 0.95,
-        green: 0.39,
-        blue: 0.10
-    )
-
-    private let columns = [
-        GridItem(.adaptive(minimum: 280), spacing: 12)
-    ]
+    private let columns = [GridItem(.adaptive(minimum: 280), spacing: 12)]
 
     var body: some View {
         Group {
@@ -22,9 +15,7 @@ struct WorkersView: View {
                 ContentUnavailableView(
                     "Access Restricted",
                     systemImage: "lock.fill",
-                    description: Text(
-                        "Only project managers and site supervisors can view the worker directory."
-                    )
+                    description: Text("Only project managers and site supervisors can view the worker directory.")
                 )
             }
         }
@@ -34,75 +25,49 @@ struct WorkersView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-
-                    
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Workers")
-                            .font(.largeTitle.bold())
-
-                        Text("Manage your construction workforce")
-                            .foregroundStyle(.secondary)
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Workers")
+                                .font(.largeTitle.bold())
+                                .foregroundStyle(AppTheme.ink)
+                            Text("Manage your construction workforce")
+                                .foregroundStyle(AppTheme.secondary)
+                        }
+                        Spacer()
+                        
+                        Button {
+                            showingAddWorker = true
+                        } label: {
+                            Label("Add", systemImage: "plus")
+                                .font(.subheadline.bold())
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(AppTheme.orange)
+                                .foregroundStyle(.white)
+                                .clipShape(Capsule())
+                        }
                     }
 
-                    
-                    LazyVGrid(
-                        columns: columns,
-                        spacing: 12
-                    ) {
-                        summaryCard(
-                            title: "Total Workers",
-                            count: viewModel.workers.count,
-                            icon: "person.3.fill",
-                            color: orange
-                        )
-
-                        summaryCard(
-                            title: "Present",
-                            count: viewModel.count(for: .present),
-                            icon: "checkmark.circle.fill",
-                            color: .green
-                        )
-
-                        summaryCard(
-                            title: "Late",
-                            count: viewModel.count(for: .late),
-                            icon: "clock.fill",
-                            color: .orange
-                        )
-
-                        summaryCard(
-                            title: "Absent",
-                            count: viewModel.count(for: .absent),
-                            icon: "xmark.circle.fill",
-                            color: .red
-                        )
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        summaryCard(title: "Total Workers", count: viewModel.workers.count, icon: "person.3.fill", color: AppTheme.orange)
+                        summaryCard(title: "Present", count: viewModel.count(for: .present), icon: "checkmark.circle.fill", color: AppTheme.green)
+                        summaryCard(title: "Late", count: viewModel.count(for: .late), icon: "clock.fill", color: AppTheme.orange)
+                        summaryCard(title: "Absent", count: viewModel.count(for: .absent), icon: "xmark.circle.fill", color: AppTheme.red)
                     }
 
-                 
                     HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.secondary)
-
-                        TextField(
-                            "Search name, role or site",
-                            text: $viewModel.searchText
-                        )
+                            .foregroundStyle(AppTheme.secondary)
+                        TextField("Search name, role or site", text: $viewModel.searchText)
                     }
                     .padding(12)
-                    .background(
-                        Color(.secondarySystemBackground)
-                    )
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 12)
-                    )
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.black.opacity(0.05)))
 
-                    
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach(
-                                viewModel.statusOptions,
-                                id: \.self
-                            ) { status in
+                            ForEach(viewModel.statusOptions, id: \.self) { status in
                                 Button {
                                     viewModel.selectedStatus = status
                                 } label: {
@@ -110,151 +75,165 @@ struct WorkersView: View {
                                         .font(.subheadline.weight(.medium))
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 9)
-                                        .background(
-                                            viewModel.selectedStatus == status
-                                            ? orange
-                                            : Color(.secondarySystemBackground)
-                                        )
-                                        .foregroundStyle(
-                                            viewModel.selectedStatus == status
-                                            ? .white
-                                            : .primary
-                                        )
+                                        .background(viewModel.selectedStatus == status ? AppTheme.orange : Color.white)
+                                        .foregroundStyle(viewModel.selectedStatus == status ? .white : AppTheme.ink)
                                         .clipShape(Capsule())
+                                        .overlay(Capsule().stroke(Color.black.opacity(viewModel.selectedStatus == status ? 0 : 0.08)))
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
                     }
 
-                    
                     HStack {
                         Text("Worker Directory")
                             .font(.title2.bold())
-
+                            .foregroundStyle(AppTheme.ink)
                         Spacer()
-
                         Text("\(viewModel.filteredWorkers.count) workers")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.secondary)
                     }
 
                     LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(viewModel.filteredWorkers) { worker in
-                            workerCard(worker)
+                            NavigationLink(destination: WorkerDetailView(worker: worker, viewModel: viewModel)) {
+                                workerCard(worker)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
 
                     if viewModel.filteredWorkers.isEmpty {
-                        ContentUnavailableView.search(
-                            text: viewModel.searchText
-                        )
-                        .frame(maxWidth: .infinity)
+                        ContentUnavailableView.search(text: viewModel.searchText)
+                            .frame(maxWidth: .infinity)
                     }
                 }
                 .padding()
                 .frame(maxWidth: 1100)
                 .frame(maxWidth: .infinity)
             }
+            .background(AppTheme.background.ignoresSafeArea())
             .navigationTitle("Workers")
             .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-
-    
-
-    private func summaryCard(
-        title: String,
-        count: Int,
-        icon: String,
-        color: Color
-    ) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundStyle(color)
-                .frame(width: 42, height: 42)
-                .background(color.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("\(count)")
-                    .font(.title.bold())
-
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            .sheet(isPresented: $showingAddWorker) {
+                AddWorkerModal(viewModel: viewModel)
             }
-
-            Spacer(minLength: 0)
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    
-    private func workerCard(_ worker: Worker) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+    private func summaryCard(title: String, count: Int, icon: String, color: Color) -> some View {
+        SurfaceCard {
             HStack(spacing: 12) {
-                Text(worker.initials)
-                    .font(.headline.bold())
-                    .foregroundStyle(orange)
-                    .frame(width: 48, height: 48)
-                    .background(orange.opacity(0.12))
-                    .clipShape(Circle())
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundStyle(color)
+                    .frame(width: 42, height: 42)
+                    .background(color.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(worker.name)
-                        .font(.headline)
-                        .lineLimit(2)
-
-                    Text(worker.role)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    Text("\(count)").font(.title.bold()).foregroundStyle(AppTheme.ink)
+                    Text(title).font(.subheadline).foregroundStyle(AppTheme.secondary)
                 }
-
                 Spacer(minLength: 0)
             }
-
-            Label(worker.site, systemImage: "building.2")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-
-            HStack {
-                Circle()
-                    .fill(statusColor(worker.status))
-                    .frame(width: 8, height: 8)
-
-                Text(worker.status.rawValue)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(statusColor(worker.status))
-
-                Spacer()
-
-                Image(systemName: "person.fill")
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.top, 4)
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
+    private func workerCard(_ worker: Worker) -> some View {
+        SurfaceCard {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 12) {
+                    Text(worker.initials)
+                        .font(.headline.bold())
+                        .foregroundStyle(AppTheme.orange)
+                        .frame(width: 48, height: 48)
+                        .background(AppTheme.orange.opacity(0.12))
+                        .clipShape(Circle())
 
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(worker.name).font(.headline).foregroundStyle(AppTheme.ink).lineLimit(1)
+                        Text(worker.role).font(.subheadline).foregroundStyle(AppTheme.secondary)
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                Label(worker.site, systemImage: "building.2")
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.secondary)
+
+                HStack {
+                    StatusPill(text: worker.status.rawValue, color: statusColor(worker.status))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(AppTheme.orange)
+                }
+            }
+        }
+    }
 
     private func statusColor(_ status: AttendanceStatus) -> Color {
         switch status {
-        case .present:
-            return .green
-        case .late:
-            return .orange
-        case .absent:
-            return .red
+        case .present: return AppTheme.green
+        case .late: return AppTheme.orange
+        case .absent: return AppTheme.red
+        }
+    }
+}
+
+// MARK: - Embedded Add Worker Modal
+struct AddWorkerModal: View {
+    @ObservedObject var viewModel: WorkersViewModel
+    @Environment(\.dismiss) var dismiss
+
+    @State private var name = ""
+    @State private var role = "Mason"
+    @State private var site = "Colombo Tower"
+    @State private var status: AttendanceStatus = .present
+
+    let roles = ["Site Supervisor", "Mason", "Electrician", "Carpenter", "General Worker", "Safety Officer"]
+    let sites = ["Colombo Tower", "Kandy Road Project", "Harbour Extension"]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Worker Information")) {
+                    TextField("Full Name", text: $name)
+                    
+                    Picker("Role", selection: $role) {
+                        ForEach(roles, id: \.self) { Text($0) }
+                    }
+
+                    Picker("Assigned Site", selection: $site) {
+                        ForEach(sites, id: \.self) { Text($0) }
+                    }
+                }
+
+                Section(header: Text("Initial Attendance Status")) {
+                    Picker("Status", selection: $status) {
+                        ForEach(AttendanceStatus.allCases) { st in
+                            Text(st.rawValue).tag(st)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+            }
+            .navigationTitle("Register New Worker")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        viewModel.addWorker(name: name, role: role, siteId: site, status: status)
+                        dismiss()
+                    }
+                    .disabled(name.isEmpty)
+                }
+            }
         }
     }
 }

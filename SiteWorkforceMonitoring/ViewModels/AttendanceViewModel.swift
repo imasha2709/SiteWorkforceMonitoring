@@ -1,38 +1,49 @@
-import Foundation
+import SwiftUI
 import Combine
+import FirebaseFirestore
 
 @MainActor
-final class AttendanceViewModel: ObservableObject {
-    @Published var records = SampleData.attendance
-    @Published var searchText = ""
-    @Published var selectedStatus = "All"
-
-    let statusOptions = ["All", "Present", "Late", "Absent"]
-
+class AttendanceViewModel: ObservableObject {
+    @Published var attendanceRecords: [AttendanceRecord] = []
+    @Published var searchText: String = ""
+    @Published var selectedStatus: AttendanceStatus? = nil
+    
+    private let db = Firestore.firestore()
+    private var listenerRegistration: ListenerRegistration?
+    
+    init() {
+        fetchAttendance()
+    }
+    
+    deinit {
+        listenerRegistration?.remove()
+    }
+    
+    func fetchAttendance() {
+        listenerRegistration = db.collection("attendance")
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self, let documents = snapshot?.documents else { return }
+                
+                self.attendanceRecords = documents.compactMap { doc in
+                    try? doc.data(as: AttendanceRecord.self)
+                }
+            }
+    }
+    
     var filteredRecords: [AttendanceRecord] {
-        records.filter { record in
-            let matchesSearch =
-                searchText.isEmpty ||
+        attendanceRecords.filter { record in
+            let matchesSearch = searchText.isEmpty ||
                 record.workerName.localizedCaseInsensitiveContains(searchText) ||
-                record.site.localizedCaseInsensitiveContains(searchText)
-
-            let matchesStatus =
-                selectedStatus == "All" ||
-                record.status.rawValue == selectedStatus
-
+                record.siteId.localizedCaseInsensitiveContains(searchText)
+            
+            let matchesStatus = selectedStatus == nil || record.status == selectedStatus
             return matchesSearch && matchesStatus
         }
     }
-
-    var presentCount: Int {
-        records.filter { $0.status == .present }.count
-    }
-
-    var lateCount: Int {
-        records.filter { $0.status == .late }.count
-    }
-
-    var absentCount: Int {
-        records.filter { $0.status == .absent }.count
+    
+    func updateStatus(for recordId: String, newStatus: AttendanceStatus) {
+        db.collection("attendance").document(recordId).updateData([
+            "status": newStatus.rawValue
+        ])
     }
 }
