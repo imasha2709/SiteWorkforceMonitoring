@@ -25,12 +25,12 @@ class WorkersViewModel: ObservableObject {
     func fetchAttendanceForToday() {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: Date())
-        
+         
         listenerRegistration = db.collection("attendance")
             .whereField("date", isGreaterThanOrEqualTo: Timestamp(date: startOfDay))
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self, let documents = snapshot?.documents else { return }
-                
+                 
                 self.workers = documents.compactMap { doc -> Worker? in
                     let data = doc.data()
                     let id = doc.documentID
@@ -39,8 +39,9 @@ class WorkersViewModel: ObservableObject {
                     let site = data["siteid"] as? String ?? "General Site"
                     let rawStatus = data["status"] as? String ?? "Absent"
                     let status = AttendanceStatus(rawValue: rawStatus) ?? .absent
-                    
-                    return Worker(id: id, name: name, role: role, site: site, status: status)
+                     
+                    // Fixed: Uses 'siteId:' instead of 'site:'
+                    return Worker(id: id, name: name, role: role, siteId: site, status: status)
                 }
             }
     }
@@ -48,24 +49,22 @@ class WorkersViewModel: ObservableObject {
     func fetchAttendanceRecords() {
         db.collection("attendance").addSnapshotListener { [weak self] snapshot, error in
             guard let self = self, let documents = snapshot?.documents else { return }
-            
+             
             self.attendanceRecords = documents.compactMap { doc -> AttendanceRecord? in
                 let data = doc.data()
                 let id = doc.documentID
                 let workerName = data["workername"] as? String ?? ""
                 let siteId = data["siteid"] as? String ?? ""
-                
-                // date as Swift Date
+                 
                 let recordDate = (data["date"] as? Timestamp)?.dateValue() ?? Date()
-                
-                // checkIn as Firestore Timestamp
+                 
                 let checkInTimestamp = data["checkin"] as? Timestamp ?? Timestamp(date: Date())
-                
+                 
                 let rawStatus = data["status"] as? String ?? "Absent"
                 let status = AttendanceStatus(rawValue: rawStatus) ?? .absent
                 let workerId = data["worker"] as? String ?? ""
                 let projectId = data["projectId"] as? String ?? ""
-                
+                 
                 return AttendanceRecord(
                     id: id,
                     worker: workerId,
@@ -83,7 +82,7 @@ class WorkersViewModel: ObservableObject {
     func addWorker(name: String, role: String, siteId: String, status: AttendanceStatus) {
         let workerId = UUID().uuidString
         let currentDate = Date()
-        
+         
         let newAttendance: [String: Any] = [
             "worker": workerId,
             "projectId": "default_project",
@@ -94,7 +93,7 @@ class WorkersViewModel: ObservableObject {
             "date": Timestamp(date: currentDate),
             "checkin": Timestamp(date: currentDate)
         ]
-        
+         
         db.collection("attendance").addDocument(data: newAttendance) { error in
             if let error = error {
                 print("Error adding worker attendance: \(error.localizedDescription)")
@@ -112,7 +111,7 @@ class WorkersViewModel: ObservableObject {
                 worker.name.localizedCaseInsensitiveContains(searchText) ||
                 worker.site.localizedCaseInsensitiveContains(searchText) ||
                 worker.role.localizedCaseInsensitiveContains(searchText)
-            
+             
             let matchesStatus = selectedStatus == "All" || worker.status.rawValue == selectedStatus
             return matchesSearch && matchesStatus
         }

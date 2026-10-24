@@ -3,6 +3,11 @@ import SwiftUI
 struct AttendanceView: View {
     @StateObject private var viewModel = WorkersViewModel()
     @State private var selectedTab = 0
+    
+    // Bind this to your Settings ViewModel or AppStorage toggle
+    // e.g., @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
+    // For demonstration, we can read it from AppStorage:
+    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
 
     private let columns = [
         GridItem(.adaptive(minimum: 280), spacing: 12)
@@ -41,6 +46,8 @@ struct AttendanceView: View {
             .navigationTitle("Attendance")
             .navigationBarTitleDisplayMode(.inline)
         }
+        // 👉 This applies dark mode or light mode based on your settings toggle
+        .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
     }
 
     private var overviewContent: some View {
@@ -51,6 +58,7 @@ struct AttendanceView: View {
                 summaryCard(title: "Absent", count: viewModel.count(for: .absent), color: AppTheme.red, icon: "xmark.circle.fill")
             }
 
+            // Adaptive Search Bar
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(AppTheme.secondary)
@@ -58,10 +66,10 @@ struct AttendanceView: View {
                 TextField("Search worker or site", text: $viewModel.searchText)
             }
             .padding(12)
-            .background(Color.white)
+            .background(Color(.tertiarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.black.opacity(0.05)))
 
+            // Status Filters
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(viewModel.statusOptions, id: \.self) { status in
@@ -72,10 +80,9 @@ struct AttendanceView: View {
                                 .font(.subheadline.weight(.medium))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 9)
-                                .background(viewModel.selectedStatus == status ? AppTheme.orange : Color.white)
+                                .background(viewModel.selectedStatus == status ? AppTheme.orange : Color(.secondarySystemBackground))
                                 .foregroundStyle(viewModel.selectedStatus == status ? .white : AppTheme.ink)
                                 .clipShape(Capsule())
-                                .overlay(Capsule().stroke(Color.black.opacity(viewModel.selectedStatus == status ? 0 : 0.08)))
                         }
                         .buttonStyle(.plain)
                     }
@@ -149,23 +156,18 @@ struct AttendanceView: View {
 
                         HStack(spacing: 8) {
                             ForEach(AttendanceStatus.allCases) { statusOption in
+                                let isSelected = worker.status == statusOption
+                                
                                 Button {
-                                    viewModel.updateStatus(for: worker.id, newStatus: statusOption)
+                                    guard let workerId = worker.id else { return }
+                                    viewModel.updateStatus(for: workerId, newStatus: statusOption)
                                 } label: {
                                     Text(statusOption.rawValue)
                                         .font(.subheadline.weight(.semibold))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 8)
-                                        .background(
-                                            worker.status == statusOption
-                                                ? statusColor(statusOption)
-                                                : Color(.secondarySystemBackground)
-                                        )
-                                        .foregroundStyle(
-                                            worker.status == statusOption
-                                                ? .white
-                                                : AppTheme.ink
-                                        )
+                                        .background(isSelected ? statusColor(statusOption) : Color(.tertiarySystemBackground))
+                                        .foregroundStyle(isSelected ? Color.white : AppTheme.ink)
                                         .clipShape(RoundedRectangle(cornerRadius: 10))
                                 }
                                 .buttonStyle(.plain)

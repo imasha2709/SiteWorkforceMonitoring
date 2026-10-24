@@ -5,6 +5,9 @@ struct WorkersView: View {
     @EnvironmentObject var authentication: AuthenticationViewModel
     @State private var showingAddWorker = false
 
+    // AppStorage key for the Dark Mode toggle in Settings
+    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
+
     private let columns = [GridItem(.adaptive(minimum: 280), spacing: 12)]
 
     var body: some View {
@@ -19,6 +22,8 @@ struct WorkersView: View {
                 )
             }
         }
+        // Apply dark/light color scheme dynamically based on toggle state
+        .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
     }
 
     private var workersContent: some View {
@@ -55,16 +60,17 @@ struct WorkersView: View {
                         summaryCard(title: "Absent", count: viewModel.count(for: .absent), icon: "xmark.circle.fill", color: AppTheme.red)
                     }
 
+                    // Adaptive Search Bar for Light/Dark Mode
                     HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(AppTheme.secondary)
                         TextField("Search name, role or site", text: $viewModel.searchText)
                     }
                     .padding(12)
-                    .background(Color.white)
+                    .background(Color(.tertiarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.black.opacity(0.05)))
 
+                    // Status Filters
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(viewModel.statusOptions, id: \.self) { status in
@@ -75,10 +81,9 @@ struct WorkersView: View {
                                         .font(.subheadline.weight(.medium))
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 9)
-                                        .background(viewModel.selectedStatus == status ? AppTheme.orange : Color.white)
+                                        .background(viewModel.selectedStatus == status ? AppTheme.orange : Color(.secondarySystemBackground))
                                         .foregroundStyle(viewModel.selectedStatus == status ? .white : AppTheme.ink)
                                         .clipShape(Capsule())
-                                        .overlay(Capsule().stroke(Color.black.opacity(viewModel.selectedStatus == status ? 0 : 0.08)))
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -183,7 +188,6 @@ struct WorkersView: View {
     }
 }
 
-// MARK: - Embedded Add Worker Modal
 struct AddWorkerModal: View {
     @ObservedObject var viewModel: WorkersViewModel
     @Environment(\.dismiss) var dismiss

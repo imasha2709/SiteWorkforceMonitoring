@@ -1,10 +1,12 @@
 import SwiftUI
 import MapKit
 
-// MARK: - Projects Overview View
 struct ProjectsView: View {
     @StateObject private var viewModel = ProjectsViewModel()
     @State private var showingAddProject = false
+
+    // AppStorage key for the Dark Mode toggle in Settings
+    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
 
     private let columns = [GridItem(.adaptive(minimum: 290), spacing: 14)]
 
@@ -13,7 +15,6 @@ struct ProjectsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     
-                    // Header & Add Button
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Projects")
@@ -23,6 +24,17 @@ struct ProjectsView: View {
                                 .foregroundStyle(AppTheme.secondary)
                         }
                         Spacer()
+                        
+                        // 📊 NavigationLink to ProjectAnalyticsView
+                                                NavigationLink(destination: ProjectAnalyticsView(viewModel: viewModel)) {
+                                                    Image(systemName: "chart.bar.xaxis")
+                                                        .font(.subheadline.bold())
+                                                        .padding(10)
+                                                        .background(AppTheme.orange.opacity(0.15))
+                                                        .foregroundStyle(AppTheme.orange)
+                                                        .clipShape(Circle())
+                                                }
+                        
                         Button {
                             showingAddProject = true
                         } label: {
@@ -36,7 +48,6 @@ struct ProjectsView: View {
                         }
                     }
 
-                    // Summary Grid
                     LazyVGrid(columns: columns, spacing: 12) {
                         summaryCard(title: "Total Projects", value: "\(viewModel.projects.count)", icon: "building.2.fill", color: AppTheme.orange)
                         summaryCard(title: "Average Progress", value: "\(Int(viewModel.averageProgress * 100))%", icon: "chart.bar.fill", color: AppTheme.blue)
@@ -44,16 +55,15 @@ struct ProjectsView: View {
                         summaryCard(title: "Need Attention", value: "\(viewModel.projectsNeedingAttention)", icon: "exclamationmark.triangle.fill", color: AppTheme.red)
                     }
 
-                    // Search Bar
+                    // Adaptive Search Bar for Light/Dark Mode
                     HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(AppTheme.secondary)
                         TextField("Search project or location", text: $viewModel.searchText)
                     }
                     .padding(12)
-                    .background(Color.white)
+                    .background(Color(.tertiarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.black.opacity(0.05)))
 
                     // Status Filters
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -66,17 +76,15 @@ struct ProjectsView: View {
                                         .font(.subheadline.weight(.medium))
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 9)
-                                        .background(viewModel.selectedStatus == status ? AppTheme.orange : Color.white)
+                                        .background(viewModel.selectedStatus == status ? AppTheme.orange : Color(.secondarySystemBackground))
                                         .foregroundStyle(viewModel.selectedStatus == status ? .white : AppTheme.ink)
                                         .clipShape(Capsule())
-                                        .overlay(Capsule().stroke(Color.black.opacity(viewModel.selectedStatus == status ? 0 : 0.08)))
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
                     }
 
-                    // Directory Header
                     HStack {
                         Text("Project Directory")
                             .font(.title2.bold())
@@ -87,7 +95,6 @@ struct ProjectsView: View {
                             .foregroundStyle(AppTheme.secondary)
                     }
 
-                    // Grid List
                     LazyVGrid(columns: columns, spacing: 14) {
                         ForEach(viewModel.filteredProjects) { project in
                             NavigationLink(destination: ProjectDetailView(project: project, viewModel: viewModel)) {
@@ -112,6 +119,8 @@ struct ProjectsView: View {
                 AddProjectModal(viewModel: viewModel)
             }
         }
+        // Controls dark/light appearance based on settings toggle
+        .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
     }
 
     private func summaryCard(title: String, value: String, icon: String, color: Color) -> some View {
@@ -146,7 +155,7 @@ struct ProjectsView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(project.name).font(.headline).foregroundStyle(AppTheme.ink)
-                        Text(project.location).font(.subheadline).foregroundStyle(AppTheme.secondary).lineLimit(2)
+                        Text(project.location ?? "No location").font(.subheadline).foregroundStyle(AppTheme.secondary).lineLimit(2)
                     }
                     Spacer(minLength: 4)
                     StatusPill(text: project.status, color: project.status == "On track" ? AppTheme.green : AppTheme.orange)
@@ -156,7 +165,9 @@ struct ProjectsView: View {
                     HStack {
                         Text("Project Progress").font(.subheadline).foregroundStyle(AppTheme.ink)
                         Spacer()
-                        Text("\(Int(project.progress * 100))%").font(.subheadline.bold()).foregroundStyle(AppTheme.maroon)
+                        Text("\(Int(project.progress * 100))%")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(AppTheme.maroon)
                     }
                     GradientProgressView(progress: project.progress)
                 }
@@ -177,7 +188,6 @@ struct ProjectsView: View {
     }
 }
 
-// MARK: - Embedded Add Project Modal
 struct AddProjectModal: View {
     @ObservedObject var viewModel: ProjectsViewModel
     @Environment(\.dismiss) var dismiss

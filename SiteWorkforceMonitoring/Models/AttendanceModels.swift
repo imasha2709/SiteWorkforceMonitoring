@@ -13,11 +13,11 @@ enum AttendanceStatus: String, Codable, CaseIterable, Identifiable {
 // MARK: - Attendance Collection ("attendance")
 struct AttendanceRecord: Identifiable, Codable {
     @DocumentID var id: String?
-    var worker: String
+    var worker: String?
     var workerName: String
-    var projectId: String
+    var projectId: String?
     var siteId: String
-    var date: Date
+    var date: Date?
     var status: AttendanceStatus
     var checkIn: Timestamp?
     var checkOut: Timestamp?
@@ -25,12 +25,12 @@ struct AttendanceRecord: Identifiable, Codable {
     enum CodingKeys: String, CodingKey {
         case id
         case worker
-        case workerName = "workername"
-        case projectId = "projectid"
-        case siteId = "siteid"
+        case workerName = "workerName"       // ✅ Matches Firestore camelCase
+        case projectId = "projectId"         // ✅ Matches Firestore camelCase
+        case siteId = "siteId"               // ✅ Matches Firestore camelCase
         case date
         case status
-        case checkIn = "checkin"
-        case checkOut = "checkout"
+        case checkIn = "checkIn"             // ✅ Matches Firestore camelCase
+        case checkOut = "checkOut"
     }
 }

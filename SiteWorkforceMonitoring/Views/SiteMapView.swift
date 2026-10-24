@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import FirebaseCore
+import FirebaseFirestore
 
 struct SiteMapView: View {
     @StateObject private var viewModel = SiteMapViewModel()
@@ -26,17 +27,15 @@ struct SiteMapView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
 
+                    // MARK: - Header & Style Picker
                     HStack {
                         VStack(alignment: .leading, spacing: 5) {
-                            Text("Site Map & Paths")
+                            Text("Interactive Site Map")
                                 .font(.largeTitle.bold())
-
-                            Text("Inspect site terrain, roads, and record attendance")
+                            Text("Live terrain, routing, & geofenced check-ins")
                                 .foregroundStyle(.secondary)
                         }
-                        
                         Spacer()
-                        
                         Picker("Map Style", selection: $mapStyleOption) {
                             ForEach(MapStyleOption.allCases, id: \.self) { style in
                                 Text(style.rawValue).tag(style)
@@ -46,7 +45,40 @@ struct SiteMapView: View {
                         .frame(width: 170)
                     }
 
+                    // MARK: - Active Geofence Alert Banner
+                    if let alertMessage = viewModel.activeGeofenceAlert {
+                        HStack(spacing: 12) {
+                            Image(systemName: viewModel.isInsideGeofence ? "scope" : "exclamationmark.triangle.fill")
+                                .foregroundStyle(viewModel.isInsideGeofence ? .green : .orange)
+                                .font(.title3)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(viewModel.isInsideGeofence ? "Geofence Entry Detected" : "Geofence Notice")
+                                    .font(.subheadline.bold())
+                                Text(alertMessage)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                        }
+                        .padding()
+                        .background(viewModel.isInsideGeofence ? Color.green.opacity(0.12) : Color.orange.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+
+                    // MARK: - Interactive Map View
                     Map(position: $cameraPosition) {
+                        // User Location Marker
+                        if let userLoc = viewModel.userLocation {
+                            Annotation("My Location", coordinate: userLoc) {
+                                ZStack {
+                                    Circle().fill(Color.blue.opacity(0.3)).frame(width: 32, height: 32)
+                                    Circle().fill(Color.blue).frame(width: 14, height: 14)
+                                    Circle().stroke(Color.white, lineWidth: 2).frame(width: 14, height: 14)
+                                }
+                            }
+                        }
+
+                        // Project Pins & Geofence Circles
                         ForEach(viewModel.projects) { project in
                             Annotation(
                                 project.name,
@@ -55,10 +87,23 @@ struct SiteMapView: View {
                             ) {
                                 mapAnnotationButton(for: project)
                             }
+
+                            // Show visual geofence radius circle around selected project
+                            if viewModel.selectedProjectName == project.name {
+                                MapCircle(center: project.coordinate, radius: viewModel.geofenceRadiusMeters)
+                                    .foregroundStyle(viewModel.isInsideGeofence ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
+                                    .stroke(viewModel.isInsideGeofence ? Color.green : Color.orange, lineWidth: 2)
+                            }
+                        }
+
+                        // Render Route Polyline if calculated
+                        if !viewModel.routeCoordinates.isEmpty {
+                            MapPolyline(coordinates: viewModel.routeCoordinates)
+                                .stroke(orange, lineWidth: 5)
                         }
                     }
                     .mapStyle(mapStyleOption == .hybrid ? .hybrid(elevation: .realistic) : .standard)
-                    .frame(height: 360)
+                    .frame(height: 380)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
                     .overlay(alignment: .topTrailing) {
                         Button {
@@ -75,6 +120,27 @@ struct SiteMapView: View {
                         .buttonStyle(.plain)
                     }
 
+                    // MARK: - Navigation Details Banner
+                    if let time = viewModel.travelTime, let dist = viewModel.distanceText, let name = viewModel.selectedProjectName {
+                        HStack {
+                            Label("Route to \(name): \(dist) (\(time))", systemImage: "car.fill")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(orange)
+                            Spacer()
+                            Button("Clear Route") {
+                                viewModel.routeCoordinates = []
+                                viewModel.travelTime = nil
+                                viewModel.distanceText = nil
+                            }
+                            .font(.caption.bold())
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .background(orange.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+
+                    // MARK: - Selected Project Details or Overview
                     if let project = viewModel.selectedProject {
                         projectDetailsWithActions(project)
                     } else {
@@ -83,6 +149,7 @@ struct SiteMapView: View {
 
                     Divider()
 
+                    // MARK: - Live Attendance Section
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Live Attendance Log")
@@ -91,9 +158,7 @@ struct SiteMapView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
-                        
                         Spacer()
-                        
                         Button {
                             showingAttendanceSheet = true
                         } label: {
@@ -108,6 +173,7 @@ struct SiteMapView: View {
                         .buttonStyle(.plain)
                     }
 
+                    // Attendance Record Feed
                     if viewModel.filteredAttendance.isEmpty {
                         ContentUnavailableView(
                             "No Records",
@@ -182,16 +248,18 @@ struct SiteMapView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(project.name).font(.headline)
-                    Text(project.location).font(.subheadline).foregroundStyle(.secondary)
+                    Text(project.location ?? "No location provided")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                Text(project.status)
+                Text(viewModel.isInsideGeofence ? "Inside Geofence" : "Outside Zone")
                     .font(.caption.bold())
-                    .foregroundStyle(project.status == "Attention" ? .red : .green)
+                    .foregroundStyle(viewModel.isInsideGeofence ? .green : .orange)
                     .padding(8)
-                    .background((project.status == "Attention" ? Color.red : Color.green).opacity(0.12))
+                    .background((viewModel.isInsideGeofence ? Color.green : Color.orange).opacity(0.12))
                     .clipShape(Capsule())
             }
 
@@ -199,20 +267,25 @@ struct SiteMapView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
+            // Live Worker Stats
             HStack {
-                Text("Progress")
+                Label("\(viewModel.currentSiteWorkerCount) Workers Active", systemImage: "person.3.fill")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(orange)
                 Spacer()
-                Text("\(Int(project.progress * 100))%").bold()
+                Text("Progress: \(Int(project.progress * 100))%")
+                    .bold()
             }
             .font(.subheadline)
 
             ProgressView(value: project.progress).tint(orange)
 
+            // Action Buttons
             HStack(spacing: 12) {
                 Button {
                     showingAttendanceSheet = true
                 } label: {
-                    Label("Mark Attendance", systemImage: "checkmark.circle.fill")
+                    Label("Check-In", systemImage: "checkmark.circle.fill")
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                         .padding(12)
@@ -223,15 +296,13 @@ struct SiteMapView: View {
                 .buttonStyle(.plain)
 
                 Button {
-                    let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: project.coordinate))
-                    mapItem.name = project.name
-                    mapItem.openInMaps()
+                    viewModel.calculateRoute(to: project.coordinate)
                 } label: {
-                    Label("Directions", systemImage: "map")
+                    Label("Show Route", systemImage: "map.fill")
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                         .padding(12)
-                        .background(orange.opacity(0.12))
+                        .background(orange.opacity(0.15))
                         .foregroundStyle(orange)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
@@ -247,7 +318,7 @@ struct SiteMapView: View {
     private var allSitesSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("All Construction Sites Overview").font(.headline)
-            Text("\(viewModel.projects.count) active sites with satellite tracking enabled.")
+            Text("\(viewModel.projects.count) active sites with live geofencing and path tracking enabled.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -267,8 +338,9 @@ struct SiteMapView: View {
                 Text(record.workerName).font(.headline)
                 Text("Site: \(record.siteId)").font(.caption).foregroundStyle(.secondary)
                 
-                if let checkIn = record.checkIn {
-                    Text("Check-in: \(checkIn.dateValue().formatted(date: .omitted, time: .shortened))")
+                if let timestamp = record.checkIn {
+                    let date = timestamp.dateValue()
+                    Text("Check-in: \(date.formatted(date: .omitted, time: .shortened))")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 } else {

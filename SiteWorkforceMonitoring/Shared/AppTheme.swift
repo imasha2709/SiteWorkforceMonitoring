@@ -4,7 +4,6 @@ enum AppTheme {
     static let orange = Color(red: 0.96, green: 0.38, blue: 0.12)
     static let orangeLight = Color(red: 1.00, green: 0.93, blue: 0.88)
     
-    // Maroon Brown & Gradient Tones
     static let maroon = Color(red: 0.48, green: 0.12, blue: 0.14)
     static let maroonBrown = Color(red: 0.38, green: 0.16, blue: 0.15)
     

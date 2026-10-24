@@ -1,17 +1,21 @@
 import SwiftUI
 import MapKit
+import FirebaseCore
+import FirebaseFirestore
 
-// MARK: - Project Detail View
 struct ProjectDetailView: View {
     let project: ConstructionProject
     @ObservedObject var viewModel: ProjectsViewModel
+    
     @State private var showingSitemap = false
+    @State private var showingAddTaskModal = false
+
+    private let availableStatuses = ["On track", "Attention", "Delayed", "Completed"]
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                
-                // Header Banner
+                 
                 ZStack(alignment: .bottomLeading) {
                     Rectangle()
                         .fill(AppTheme.orange.opacity(0.15))
@@ -30,7 +34,7 @@ struct ProjectDetailView: View {
                         Text(project.name)
                             .font(.title.bold())
                             .foregroundStyle(.white)
-                        Text(project.location)
+                        Text(project.location ?? "No location provided")
                             .font(.subheadline)
                             .foregroundStyle(.white.opacity(0.9))
                     }
@@ -38,12 +42,33 @@ struct ProjectDetailView: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 16))
 
-                // Metadata Card
                 SurfaceCard {
                     HStack {
                         Text("Project Status").font(.headline).foregroundStyle(AppTheme.ink)
                         Spacer()
-                        StatusPill(text: project.status, color: project.status == "Attention" ? AppTheme.red : AppTheme.green)
+                        
+                        // MARK: - Interactive Status Picker Menu
+                        Menu {
+                            ForEach(availableStatuses, id: \.self) { status in
+                                Button {
+                                    viewModel.updateProjectStatus(project: project, newStatus: status)
+                                } label: {
+                                    HStack {
+                                        Text(status)
+                                        if project.status == status {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                StatusPill(text: project.status ?? "On track", color: statusColor(for: project.status ?? "On track"))
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2)
+                                    .foregroundStyle(AppTheme.secondary)
+                            }
+                        }
                     }
 
                     Text(project.description ?? "No description provided.")
@@ -86,7 +111,7 @@ struct ProjectDetailView: View {
                         Text("\(workerCount) workers assigned")
                             .font(.subheadline)
                             .foregroundStyle(AppTheme.secondary)
-                        
+                         
                         Spacer()
 
                         Button {
@@ -103,24 +128,35 @@ struct ProjectDetailView: View {
                     }
                 }
 
-                // Tasks & Checkboxes Section
+                // MARK: - Tasks Section
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Milestones & Tasks")
-                        .font(.title2.bold())
-                        .foregroundStyle(AppTheme.ink)
+                    HStack {
+                        Text("Milestones & Tasks")
+                            .font(.title2.bold())
+                            .foregroundStyle(AppTheme.ink)
+                        Spacer()
+                        Button {
+                            showingAddTaskModal = true
+                        } label: {
+                            Label("Add Task", systemImage: "plus")
+                                .font(.subheadline.bold())
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(AppTheme.orange)
+                                .foregroundStyle(.white)
+                                .clipShape(Capsule())
+                        }
+                    }
 
-                    let taskList = project.tasks ?? []
-                    if taskList.isEmpty {
+                    if viewModel.projectTasks.isEmpty {
                         Text("No tasks assigned yet.")
                             .foregroundStyle(AppTheme.secondary)
                     } else {
-                        ForEach(taskList) { task in
+                        ForEach(viewModel.projectTasks) { task in
                             SurfaceCard {
                                 HStack(spacing: 12) {
                                     Button {
-                                        if let taskId = task.id {
-                                            viewModel.toggleTaskCompletion(for: project.projectId, taskID: taskId)
-                                        }
+                                        viewModel.toggleTaskCompletion(task: task)
                                     } label: {
                                         Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
                                             .font(.title3)
@@ -134,12 +170,17 @@ struct ProjectDetailView: View {
                                             .strikethrough(task.isCompleted)
                                             .foregroundStyle(AppTheme.ink)
 
-                                        let priorityStr = task.priority ?? "Normal"
-                                        Text("Priority: \(priorityStr)")
-                                            .font(.caption2)
-                                            .foregroundStyle(AppTheme.secondary)
+                                        if let desc = task.description, !desc.isEmpty {
+                                            Text(desc)
+                                                .font(.caption)
+                                                .foregroundStyle(AppTheme.secondary)
+                                        }
                                     }
                                     Spacer()
+                                     
+                                    if let status = task.status {
+                                        StatusPill(text: status, color: task.isCompleted ? AppTheme.green : AppTheme.orange)
+                                    }
                                 }
                             }
                         }
@@ -151,20 +192,68 @@ struct ProjectDetailView: View {
         .background(AppTheme.background.ignoresSafeArea())
         .navigationTitle("Project Details")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            viewModel.fetchTasks(for: project.projectId)
+        }
         .sheet(isPresented: $showingSitemap) {
             ProjectSitemapView(project: project)
+        }
+        .sheet(isPresented: $showingAddTaskModal) {
+            AddTaskModal(viewModel: viewModel, projectId: project.projectId)
+        }
+    }
+
+    private func statusColor(for status: String) -> Color {
+        switch status {
+        case "Attention": return AppTheme.red
+        case "Delayed": return AppTheme.red
+        case "Completed": return AppTheme.blue
+        default: return AppTheme.green
         }
     }
 }
 
-// MARK: - Project Sitemap View
+struct AddTaskModal: View {
+    @ObservedObject var viewModel: ProjectsViewModel
+    let projectId: String
+    @Environment(\.dismiss) var dismiss
+
+    @State private var taskTitle = ""
+    @State private var taskDescription = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Task Details")) {
+                    TextField("Task Title", text: $taskTitle)
+                    TextField("Description", text: $taskDescription)
+                }
+            }
+            .navigationTitle("New Task")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        viewModel.addTask(title: taskTitle, description: taskDescription, projectId: projectId)
+                        dismiss()
+                    }
+                    .disabled(taskTitle.isEmpty)
+                }
+            }
+        }
+    }
+}
+
 struct ProjectSitemapView: View {
     let project: ConstructionProject
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        let latitude = project.latitude ?? 37.7749
-        let longitude = project.longitude ?? -122.4194
+        let latitude = project.latitude ?? 6.9271
+        let longitude = project.longitude ?? 79.8612
         let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
 
         NavigationStack {

@@ -34,7 +34,6 @@ struct MainTabView: View {
                                 Label("Site Map", systemImage: "map.fill")
                             }
                     }
-                    // ✅ Settings Gear Icon Button in top right corner
                     .overlay(alignment: .topTrailing) {
                         Button {
                             showingSettings.toggle()

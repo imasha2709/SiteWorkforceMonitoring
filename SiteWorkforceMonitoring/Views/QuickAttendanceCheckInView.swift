@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseFirestore
 
 struct QuickAttendanceCheckInView: View {
     let siteName: String
@@ -7,6 +8,7 @@ struct QuickAttendanceCheckInView: View {
     @State private var workerName = ""
     @State private var selectedStatus: AttendanceStatus = .present
     @State private var note = ""
+    @State private var isSubmitting = false
 
     private let orange = Color(red: 0.95, green: 0.39, blue: 0.10)
 
@@ -22,9 +24,9 @@ struct QuickAttendanceCheckInView: View {
                     TextField("Worker Full Name", text: $workerName)
                     
                     Picker("Attendance Status", selection: $selectedStatus) {
-                        ForEach(AttendanceStatus.allCases) { status in
-                            Text(status.rawValue).tag(status)
-                        }
+                        Text("Present").tag(AttendanceStatus.present)
+                        Text("Late").tag(AttendanceStatus.late)
+                        Text("Absent").tag(AttendanceStatus.absent)
                     }
                 }
 
@@ -40,11 +42,33 @@ struct QuickAttendanceCheckInView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save Check-in") {
-                        // Here you would normally add the record to your data store or view model
-                        dismiss()
+                        submitAttendanceRecord()
                     }
-                    .disabled(workerName.isEmpty)
+                    .disabled(workerName.isEmpty || isSubmitting)
                 }
+            }
+        }
+    }
+
+    private func submitAttendanceRecord() {
+        isSubmitting = true
+        let db = Firestore.firestore()
+        
+        let attendanceData: [String: Any] = [
+            "workerName": workerName,
+            "siteId": siteName, // Matches your site filtering logic in SiteMapViewModel
+            "checkIn": FieldValue.serverTimestamp(),
+            "status": selectedStatus.rawValue,
+            "note": note
+        ]
+        
+        db.collection("attendance").addDocument(data: attendanceData) { error in
+            isSubmitting = false
+            if let error = error {
+                print("❌ Error saving attendance: \(error.localizedDescription)")
+            } else {
+                print("✅ Successfully checked in worker: \(workerName) for site: \(siteName)")
+                dismiss()
             }
         }
     }

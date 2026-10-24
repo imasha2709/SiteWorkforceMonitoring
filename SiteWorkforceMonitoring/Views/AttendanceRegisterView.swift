@@ -1,4 +1,3 @@
-// AttendanceRegisterView.swift
 import SwiftUI
 
 struct AttendanceRegisterView: View {
@@ -33,7 +32,7 @@ struct AttendanceRegisterView: View {
                                     Text(worker.name)
                                         .font(.headline)
                                         .foregroundStyle(AppTheme.ink)
-                                    Text("\(worker.role) • \(worker.site)")
+                                    Text("\(worker.role)\n\(worker.site)")
                                         .font(.caption)
                                         .foregroundStyle(AppTheme.secondary)
                                 }
@@ -46,7 +45,9 @@ struct AttendanceRegisterView: View {
                             HStack(spacing: 8) {
                                 ForEach(AttendanceStatus.allCases) { statusOption in
                                     Button {
-                                        viewModel.updateStatus(for: worker.id, newStatus: statusOption)
+                                        // Fixed: Safely unwrap optional worker.id
+                                        guard let workerId = worker.id else { return }
+                                        viewModel.updateStatus(for: workerId, newStatus: statusOption)
                                     } label: {
                                         Text(statusOption.rawValue)
                                             .font(.subheadline.weight(.semibold))

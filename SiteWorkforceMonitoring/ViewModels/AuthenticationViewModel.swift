@@ -11,30 +11,33 @@ class AuthenticationViewModel: ObservableObject {
     private let db = Firestore.firestore()
 
     init() {
-        try? Auth.auth().signOut()
+        // FIX: Removed try? Auth.auth().signOut()
+        // Instead, check if a user is already authenticated on app launch
+        if let firebaseUser = Auth.auth().currentUser {
+            fetchUserProfile(uid: firebaseUser.uid)
+        }
     }
 
     func completeOnboarding() {
         self.hasCompletedOnboarding = true
     }
     
-    // MARK: - Update User Profile
     func updateUserProfile(name: String, assignedSite: String?, completion: @escaping (String?) -> Void) {
         guard let uid = currentUser?.id else {
             completion("No active user found.")
             return
         }
-        
+         
         var updatedData: [String: Any] = [
             "name": name
         ]
-        
+         
         if let site = assignedSite {
             updatedData["assignedSite"] = site
         } else {
             updatedData["assignedSite"] = NSNull()
         }
-        
+         
         db.collection("users").document(uid).updateData(updatedData) { [weak self] error in
             if let error = error {
                 completion(error.localizedDescription)
@@ -54,7 +57,7 @@ class AuthenticationViewModel: ObservableObject {
                 completion(error.localizedDescription)
                 return
             }
-            
+             
             if let uid = result?.user.uid {
                 self?.fetchUserProfile(uid: uid) { fetchError in
                     completion(fetchError)
@@ -71,21 +74,21 @@ class AuthenticationViewModel: ObservableObject {
                 completion(error.localizedDescription)
                 return
             }
-            
+             
             guard let uid = result?.user.uid else {
                 completion("Failed to create user account.")
                 return
             }
-            
+             
             let newUser = AppUser(id: uid, email: email, name: name, role: role)
-            
+             
             do {
                 try self?.db.collection("users").document(uid).setData(from: newUser) { error in
                     if let error = error {
                         completion(error.localizedDescription)
                         return
                     }
-                    
+                     
                     DispatchQueue.main.async {
                         self?.currentUser = newUser
                         self?.isSignedIn = true
@@ -114,7 +117,7 @@ class AuthenticationViewModel: ObservableObject {
                 completion?(error.localizedDescription)
                 return
             }
-            
+             
             if let user = try? snapshot?.data(as: AppUser.self) {
                 DispatchQueue.main.async {
                     self?.currentUser = user

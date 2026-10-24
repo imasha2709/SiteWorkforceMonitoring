@@ -12,7 +12,6 @@ struct ProfileView: View {
 
     var body: some View {
         List {
-            // Profile Header Summary
             Section {
                 HStack(spacing: 16) {
                     Image(systemName: "person.crop.circle.fill")
@@ -30,7 +29,6 @@ struct ProfileView: View {
                 .padding(.vertical, 8)
             }
 
-            // Editable Profile Fields
             Section("Edit Information") {
                 HStack {
                     Text("Full Name")
@@ -59,7 +57,6 @@ struct ProfileView: View {
                 .foregroundStyle(.orange)
             }
 
-            // Role & Access Details
             Section("Role & Access") {
                 HStack {
                     Label("Access Level", systemImage: "shield.fill")

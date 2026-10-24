@@ -17,7 +17,6 @@ struct LoginView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Header Logo & Title
                     VStack(spacing: 12) {
                         Image(systemName: "building.2.crop.circle.fill")
                             .font(.system(size: 80))
@@ -33,7 +32,6 @@ struct LoginView: View {
                     }
                     .padding(.top, 20)
 
-                    // Input Fields
                     VStack(spacing: 16) {
                         if isSigningUp {
                             TextField("Full Name", text: $name)
@@ -52,7 +50,6 @@ struct LoginView: View {
                             .background(Color(.systemGray6))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                        // Password Field with Show/Hide Toggle
                         HStack {
                             if isPasswordVisible {
                                 TextField("Password", text: $password)
@@ -76,7 +73,6 @@ struct LoginView: View {
                     }
                     .padding(.horizontal)
 
-                    // Forgot Password Button
                     if !isSigningUp {
                         HStack {
                             Spacer()
@@ -89,7 +85,6 @@ struct LoginView: View {
                         .padding(.horizontal)
                     }
 
-                    // Main Action Button
                     Button {
                         handleAuthentication()
                     } label: {
@@ -104,7 +99,6 @@ struct LoginView: View {
                     }
                     .padding(.horizontal)
 
-                    // Face ID Button
                     if !isSigningUp {
                         Button {
                             authenticateWithFaceID()
@@ -124,7 +118,6 @@ struct LoginView: View {
                         .padding(.horizontal)
                     }
 
-                    // Mode Toggle Button
                     Button {
                         isSigningUp.toggle()
                         alertMessage = ""

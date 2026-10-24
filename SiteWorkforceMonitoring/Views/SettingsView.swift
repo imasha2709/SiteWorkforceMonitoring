@@ -12,7 +12,6 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                // Account Section -> Navigation Link to Edit Profile
                 Section {
                     NavigationLink {
                         ProfileView()
@@ -39,7 +38,6 @@ struct SettingsView: View {
                     Text("Tap to view and edit your profile details.")
                 }
 
-                // Appearance Section (Dark / Light Mode)
                 Section("Appearance") {
                     Picker("Theme Mode", selection: $appTheme) {
                         Text("System").tag("system")
@@ -50,12 +48,10 @@ struct SettingsView: View {
                     .padding(.vertical, 4)
                 }
 
-                // Preferences Section
                 Section("Preferences") {
                     Toggle("Enable In-App Notifications", isOn: $notificationsEnabled)
                 }
 
-                // About App Section
                 Section("About App") {
                     HStack {
                         Text("Role")
@@ -71,7 +67,6 @@ struct SettingsView: View {
                     }
                 }
 
-                // Sign Out Section
                 Section {
                     Button(role: .destructive) {
                         showSignOutConfirmation = true

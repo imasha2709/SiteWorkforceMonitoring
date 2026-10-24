@@ -2,7 +2,7 @@ import Foundation
 import FirebaseFirestore
 import CoreLocation
 
-struct ConstructionSite: Identifiable, Codable {
+struct SiteModel: Identifiable, Codable {
     @DocumentID var id: String?
     var siteId: String
     var projectId: String
@@ -12,12 +12,9 @@ struct ConstructionSite: Identifiable, Codable {
     var longitude: Double
     var geofenceRadius: Double?
 
-    // Required for MapKit in SiteMapView
+    // Required if you ever map individual sites separately
     var coordinate: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(
-            latitude: latitude,
-            longitude: longitude
-        )
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 
     enum CodingKeys: String, CodingKey {

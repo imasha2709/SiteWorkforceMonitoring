@@ -1,7 +1,9 @@
 import SwiftUI
+import MapKit
 
 struct ProjectAnalyticsView: View {
     @ObservedObject var viewModel: ProjectsViewModel
+    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
 
     var body: some View {
         NavigationStack {
@@ -12,7 +14,6 @@ struct ProjectAnalyticsView: View {
                         .font(.largeTitle.bold())
                         .foregroundStyle(AppTheme.ink)
 
-                    // 1. Completion Percentage Card
                     SurfaceCard {
                         Text("Overall Project Completion")
                             .font(.headline)
@@ -35,7 +36,6 @@ struct ProjectAnalyticsView: View {
                         GradientProgressView(progress: viewModel.averageProgress)
                     }
 
-                    // 2. Completed vs Remaining Tasks
                     HStack(spacing: 16) {
                         let allTasks = viewModel.projects.flatMap { $0.tasks ?? [] }
                         let completedCount = allTasks.filter { $0.isCompleted }.count
@@ -45,7 +45,6 @@ struct ProjectAnalyticsView: View {
                         taskMetricCard(title: "Remaining Tasks", count: "\(remainingCount)", color: AppTheme.orange)
                     }
 
-                    // 3. Weekly Progress Velocity
                     SurfaceCard {
                         Text("Weekly Progress Velocity")
                             .font(.headline)
@@ -62,7 +61,6 @@ struct ProjectAnalyticsView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                     }
 
-                    // 4. Workforce Attendance Summary
                     SurfaceCard {
                         Text("Workforce Attendance Summary")
                             .font(.headline)
@@ -85,6 +83,7 @@ struct ProjectAnalyticsView: View {
             .navigationTitle("Analytics")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
     }
 
     private func taskMetricCard(title: String, count: String, color: Color) -> some View {
