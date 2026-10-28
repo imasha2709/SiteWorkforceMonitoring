@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseFirestore
+import UserNotifications
 
 struct QuickAttendanceCheckInView: View {
     let siteName: String
@@ -56,7 +57,7 @@ struct QuickAttendanceCheckInView: View {
         
         let attendanceData: [String: Any] = [
             "workerName": workerName,
-            "siteId": siteName, 
+            "siteId": siteName,
             "checkIn": FieldValue.serverTimestamp(),
             "status": selectedStatus.rawValue,
             "note": note
@@ -65,10 +66,43 @@ struct QuickAttendanceCheckInView: View {
         db.collection("attendance").addDocument(data: attendanceData) { error in
             isSubmitting = false
             if let error = error {
-                print("❌ Error saving attendance: \(error.localizedDescription)")
+                print("Error saving attendance: \(error.localizedDescription)")
             } else {
-                print("✅ Successfully checked in worker: \(workerName) for site: \(siteName)")
+                print("Successfully checked in worker: \(workerName) for site: \(siteName)")
+                
+          
+                triggerAttendanceNotification(workerName: workerName, status: selectedStatus.rawValue, siteName: siteName)
+                
+               
+                let alertData: [String: Any] = [
+                    "title": "Attendance Logged: \(workerName)",
+                    "message": "Status marked as \(selectedStatus.rawValue) at \(siteName)",
+                    "severity": selectedStatus == .absent ? "Critical" : (selectedStatus == .late ? "Warning" : "Info"),
+                    "type": "Attendance",
+                    "isRead": false,
+                    "createdAt": FieldValue.serverTimestamp()
+                ]
+                db.collection("alerts").addDocument(data: alertData)
+                
                 dismiss()
+            }
+        }
+    }
+
+    private func triggerAttendanceNotification(workerName: String, status: String, siteName: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "📋 Attendance Marked: \(workerName)"
+        content.body = "\(workerName) checked in as '\(status)' at \(siteName)."
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Notification error: \(error.localizedDescription)")
+            } else {
+                print("Local attendance notification dispatched successfully.")
             }
         }
     }

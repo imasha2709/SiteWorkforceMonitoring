@@ -90,7 +90,7 @@ final class DashboardViewModel: ObservableObject {
                     try? doc.data(as: SiteAlert.self)
                 }
 
-                // Fire local push notification only for newly added documents in real-time
+               
                 for change in snapshot.documentChanges {
                     if change.type == .added {
                         if let alert = try? change.document.data(as: SiteAlert.self) {
@@ -135,9 +135,9 @@ final class DashboardViewModel: ObservableObject {
 
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("❌ Failed to post local push notification: \(error.localizedDescription)")
+                print(" Failed to post local push notification: \(error.localizedDescription)")
             } else {
-                print("✅ Local push notification scheduled successfully!")
+                print("Local push notification scheduled successfully!")
             }
         }
     }

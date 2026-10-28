@@ -105,12 +105,12 @@ final class SiteMapViewModelTests: XCTestCase {
         
         viewModel.attendance = [record1, record2]
         
-        // Test status filter
+        
         viewModel.selectedStatus = "Late"
         XCTAssertEqual(viewModel.filteredAttendance.count, 1)
         XCTAssertEqual(viewModel.filteredAttendance.first?.workerName, "Nimal Perera")
 
-        // Test search filter
+       
         viewModel.selectedStatus = "All"
         viewModel.searchText = "Kamal"
         XCTAssertEqual(viewModel.filteredAttendance.count, 1)

@@ -148,7 +148,7 @@ struct LoginView: View {
                 Button("OK", role: .cancel) {
                     if isFaceIDSuccess {
                         isFaceIDSuccess = false
-                        // Directly update authentication state to show dashboard
+                        
                         authentication.simulateSuccessfulSignIn()
                     }
                 }

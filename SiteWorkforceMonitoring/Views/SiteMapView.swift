@@ -74,7 +74,7 @@ struct SiteMapView: View {
                             }
                         }
 
-                        // Render separate geofence zones for all projects
+                        
                         ForEach(viewModel.projects) { project in
                             let isSelected = viewModel.selectedProjectName == project.name
                             let isInside = isSelected && viewModel.isInsideGeofence
