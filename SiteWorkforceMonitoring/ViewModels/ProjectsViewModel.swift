@@ -78,7 +78,7 @@ class ProjectsViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Update Project Status in Firestore
+    
     func updateProjectStatus(project: ConstructionProject, newStatus: String) {
         guard let docId = project.id else { return }
         

@@ -45,7 +45,7 @@ struct AttendanceRegisterView: View {
                             HStack(spacing: 8) {
                                 ForEach(AttendanceStatus.allCases) { statusOption in
                                     Button {
-                                        // Fixed: Safely unwrap optional worker.id
+                                  
                                         guard let workerId = worker.id else { return }
                                         viewModel.updateStatus(for: workerId, newStatus: statusOption)
                                     } label: {

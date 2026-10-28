@@ -2,7 +2,7 @@ import Foundation
 import FirebaseFirestore
 import CoreLocation
 
-// MARK: - Task Model (Matches Firestore `tasks` collection)
+
 struct ProjectTask: Identifiable, Codable {
     @DocumentID var id: String?
     var taskId: String?
@@ -25,12 +25,12 @@ struct ProjectTask: Identifiable, Codable {
     }
 }
 
-// MARK: - Construction Project Model
+
 struct ConstructionProject: Identifiable, Codable {
     @DocumentID var id: String?
     var projectId: String
     var name: String
-    var location: String? // ✅ Made optional so missing Firestore fields won't crash decoding
+    var location: String? 
     var progress: Double
     var status: String
     var managerName: String

@@ -4,9 +4,6 @@ struct AttendanceView: View {
     @StateObject private var viewModel = WorkersViewModel()
     @State private var selectedTab = 0
     
-    // Bind this to your Settings ViewModel or AppStorage toggle
-    // e.g., @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
-    // For demonstration, we can read it from AppStorage:
     @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
 
     private let columns = [
@@ -46,7 +43,7 @@ struct AttendanceView: View {
             .navigationTitle("Attendance")
             .navigationBarTitleDisplayMode(.inline)
         }
-        // 👉 This applies dark mode or light mode based on your settings toggle
+
         .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
     }
 
@@ -58,7 +55,7 @@ struct AttendanceView: View {
                 summaryCard(title: "Absent", count: viewModel.count(for: .absent), color: AppTheme.red, icon: "xmark.circle.fill")
             }
 
-            // Adaptive Search Bar
+         
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(AppTheme.secondary)
@@ -69,7 +66,7 @@ struct AttendanceView: View {
             .background(Color(.tertiarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
-            // Status Filters
+          
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(viewModel.statusOptions, id: \.self) { status in

@@ -5,7 +5,7 @@ struct WorkersView: View {
     @EnvironmentObject var authentication: AuthenticationViewModel
     @State private var showingAddWorker = false
 
-    // AppStorage key for the Dark Mode toggle in Settings
+    
     @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
 
     private let columns = [GridItem(.adaptive(minimum: 280), spacing: 12)]
@@ -22,7 +22,6 @@ struct WorkersView: View {
                 )
             }
         }
-        // Apply dark/light color scheme dynamically based on toggle state
         .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
     }
 
@@ -60,7 +59,7 @@ struct WorkersView: View {
                         summaryCard(title: "Absent", count: viewModel.count(for: .absent), icon: "xmark.circle.fill", color: AppTheme.red)
                     }
 
-                    // Adaptive Search Bar for Light/Dark Mode
+                   
                     HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(AppTheme.secondary)
@@ -70,7 +69,7 @@ struct WorkersView: View {
                     .background(Color(.tertiarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                    // Status Filters
+                 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(viewModel.statusOptions, id: \.self) { status in

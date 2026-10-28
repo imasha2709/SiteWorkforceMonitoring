@@ -56,7 +56,7 @@ struct QuickAttendanceCheckInView: View {
         
         let attendanceData: [String: Any] = [
             "workerName": workerName,
-            "siteId": siteName, // Matches your site filtering logic in SiteMapViewModel
+            "siteId": siteName, 
             "checkIn": FieldValue.serverTimestamp(),
             "status": selectedStatus.rawValue,
             "note": note

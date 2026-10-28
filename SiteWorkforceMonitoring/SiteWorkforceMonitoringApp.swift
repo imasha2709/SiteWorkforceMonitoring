@@ -14,7 +14,7 @@ struct SiteWorkforceMonitoringApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authVM = AuthenticationViewModel()
     
-    // Reads theme preference globally for Light/Dark mode
+
     @AppStorage("appTheme") private var appTheme: String = "system"
 
     var body: some Scene {
@@ -33,7 +33,7 @@ struct SiteWorkforceMonitoringApp: App {
                         .environmentObject(authVM)
                 }
             }
-            // Applies Light or Dark mode across the whole app
+          
             .preferredColorScheme(getColorScheme())
         }
     }
@@ -42,7 +42,7 @@ struct SiteWorkforceMonitoringApp: App {
         switch appTheme {
         case "light": return .light
         case "dark": return .dark
-        default: return nil // Follows system default settings
+        default: return nil
         }
     }
 }

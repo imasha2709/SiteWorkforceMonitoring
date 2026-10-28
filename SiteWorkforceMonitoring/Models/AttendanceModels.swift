@@ -1,7 +1,7 @@
 import Foundation
 import FirebaseFirestore
 
-// MARK: - Attendance Status Enum
+
 enum AttendanceStatus: String, Codable, CaseIterable, Identifiable {
     case present = "Present"
     case late = "Late"
@@ -10,7 +10,7 @@ enum AttendanceStatus: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-// MARK: - Attendance Collection ("attendance")
+
 struct AttendanceRecord: Identifiable, Codable {
     @DocumentID var id: String?
     var worker: String?
@@ -25,12 +25,12 @@ struct AttendanceRecord: Identifiable, Codable {
     enum CodingKeys: String, CodingKey {
         case id
         case worker
-        case workerName = "workerName"       // ✅ Matches Firestore camelCase
-        case projectId = "projectId"         // ✅ Matches Firestore camelCase
-        case siteId = "siteId"               // ✅ Matches Firestore camelCase
+        case workerName = "workerName"
+        case projectId = "projectId"
+        case siteId = "siteId"
         case date
         case status
-        case checkIn = "checkIn"             // ✅ Matches Firestore camelCase
+        case checkIn = "checkIn"             
         case checkOut = "checkOut"
     }
 }

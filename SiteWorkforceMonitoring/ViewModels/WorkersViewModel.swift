@@ -40,7 +40,7 @@ class WorkersViewModel: ObservableObject {
                     let rawStatus = data["status"] as? String ?? "Absent"
                     let status = AttendanceStatus(rawValue: rawStatus) ?? .absent
                      
-                    // Fixed: Uses 'siteId:' instead of 'site:'
+              
                     return Worker(id: id, name: name, role: role, siteId: site, status: status)
                 }
             }

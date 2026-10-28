@@ -3,6 +3,7 @@ import Combine
 import FirebaseFirestore
 import MapKit
 import CoreLocation
+import UserNotifications
 
 @MainActor
 final class SiteMapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
@@ -12,15 +13,14 @@ final class SiteMapViewModel: NSObject, ObservableObject, CLLocationManagerDeleg
     @Published var searchText = ""
     @Published var selectedStatus = "All"
     
-    // Map & Navigation State
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var routeCoordinates: [CLLocationCoordinate2D] = []
     @Published var travelTime: String?
     @Published var distanceText: String?
     
-    // Geofence & Proximity Alert State
     @Published var activeGeofenceAlert: String? = nil
     @Published var isInsideGeofence: Bool = false
+    @Published var hoverStateByProject: [String: Bool] = [:]
 
     let statusOptions = ["All", "Present", "Late", "Absent"]
     let geofenceRadiusMeters: CLLocationDistance = 150.0
@@ -32,6 +32,7 @@ final class SiteMapViewModel: NSObject, ObservableObject, CLLocationManagerDeleg
 
     override init() {
         super.init()
+        requestNotificationPermission()
         setupLocationManager()
         fetchProjects()
         fetchAttendance()
@@ -40,6 +41,16 @@ final class SiteMapViewModel: NSObject, ObservableObject, CLLocationManagerDeleg
     deinit {
         projectsListener?.remove()
         attendanceListener?.remove()
+    }
+
+    private func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if let error = error {
+                print("❌ Notification Permission Error: \(error.localizedDescription)")
+            } else {
+                print("🔔 Notification Permission Granted: \(granted)")
+            }
+        }
     }
 
     private func setupLocationManager() {
@@ -124,7 +135,6 @@ final class SiteMapViewModel: NSObject, ObservableObject, CLLocationManagerDeleg
         }
     }
 
-    // MARK: - Route Calculation (Directions)
     func calculateRoute(to destination: CLLocationCoordinate2D) {
         guard let userLoc = userLocation else {
             let fallbackUser = CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612)
@@ -137,17 +147,26 @@ final class SiteMapViewModel: NSObject, ObservableObject, CLLocationManagerDeleg
     private func requestDirections(from start: CLLocationCoordinate2D, to destination: CLLocationCoordinate2D) {
         let request = MKDirections.Request()
         
-        let startLocation = CLLocation(latitude: start.latitude, longitude: start.longitude)
-        let destLocation = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
+        let startPlacemark = MKPlacemark(coordinate: start)
+        let destPlacemark = MKPlacemark(coordinate: destination)
         
-        request.source = MKMapItem(location: startLocation, address: nil)
-        request.destination = MKMapItem(location: destLocation, address: nil)
+        request.source = MKMapItem(placemark: startPlacemark)
+        request.destination = MKMapItem(placemark: destPlacemark)
         request.transportType = .automobile
 
         let directions = MKDirections(request: request)
         directions.calculate { [weak self] response, error in
-            guard let route = response?.routes.first else { return }
-            DispatchQueue.main.async {
+            if let error = error {
+                print("❌ Route calculation error: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let route = response?.routes.first else {
+                print("⚠️ No route returned by MKDirections")
+                return
+            }
+            
+            Task { @MainActor [weak self] in
                 self?.routeCoordinates = route.polyline.coordinates
                 let formatter = DateComponentsFormatter()
                 formatter.unitsStyle = .abbreviated
@@ -160,8 +179,7 @@ final class SiteMapViewModel: NSObject, ObservableObject, CLLocationManagerDeleg
         }
     }
 
-    // MARK: - Geofence Evaluation
-    private func evaluateGeofence(for userLoc: CLLocationCoordinate2D) {
+    func evaluateGeofence(for userLoc: CLLocationCoordinate2D) {
         guard let project = selectedProject else {
             isInsideGeofence = false
             activeGeofenceAlert = nil
@@ -176,17 +194,54 @@ final class SiteMapViewModel: NSObject, ObservableObject, CLLocationManagerDeleg
         if distanceMeters <= geofenceRadiusMeters {
             if !isInsideGeofence {
                 isInsideGeofence = true
-                activeGeofenceAlert = "Entered geofence zone for \(project.name)"
+                let alertMessage = "Worker entered pre-defined site zone for \(project.name)"
+                activeGeofenceAlert = alertMessage
+                sendLocalNotification(title: "Site Geofence Alert", body: alertMessage)
             }
         } else {
             if isInsideGeofence {
                 isInsideGeofence = false
-                activeGeofenceAlert = "Exited geofence zone for \(project.name)"
+                let alertMessage = "Worker went outside pre-defined site zone for \(project.name)"
+                activeGeofenceAlert = alertMessage
+                sendLocalNotification(title: "Site Geofence Alert", body: alertMessage)
             }
         }
     }
 
-    // MARK: - CLLocationManagerDelegate
+    func handleHover(isHovered: Bool, for project: ConstructionProject) {
+        hoverStateByProject[project.name] = isHovered
+        
+        if isHovered {
+            isInsideGeofence = true
+            let alertMessage = "Worker entered pre-defined site zone for \(project.name)"
+            activeGeofenceAlert = alertMessage
+            sendLocalNotification(title: "Pointer Geofence Entry", body: alertMessage)
+        } else {
+            if selectedProjectName == project.name {
+                isInsideGeofence = false
+                let alertMessage = "Worker went outside pre-defined site zone for \(project.name)"
+                activeGeofenceAlert = alertMessage
+                sendLocalNotification(title: "Pointer Geofence Exit", body: alertMessage)
+            }
+        }
+    }
+
+    private func sendLocalNotification(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Failed to schedule local notification: \(error.localizedDescription)")
+            }
+        }
+    }
+
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         Task { @MainActor in
@@ -200,7 +255,6 @@ final class SiteMapViewModel: NSObject, ObservableObject, CLLocationManagerDeleg
     }
 }
 
-// MARK: - Helper Extension for Polyline coordinates
 extension MKPolyline {
     var coordinates: [CLLocationCoordinate2D] {
         var coords = [CLLocationCoordinate2D](repeating: kCLLocationCoordinate2DInvalid, count: pointCount)

@@ -27,7 +27,6 @@ struct SiteMapView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
 
-                    // MARK: - Header & Style Picker
                     HStack {
                         VStack(alignment: .leading, spacing: 5) {
                             Text("Interactive Site Map")
@@ -45,14 +44,13 @@ struct SiteMapView: View {
                         .frame(width: 170)
                     }
 
-                    // MARK: - Active Geofence Alert Banner
                     if let alertMessage = viewModel.activeGeofenceAlert {
                         HStack(spacing: 12) {
                             Image(systemName: viewModel.isInsideGeofence ? "scope" : "exclamationmark.triangle.fill")
                                 .foregroundStyle(viewModel.isInsideGeofence ? .green : .orange)
                                 .font(.title3)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(viewModel.isInsideGeofence ? "Geofence Entry Detected" : "Geofence Notice")
+                                Text(viewModel.isInsideGeofence ? "Worker Entered Site" : "Worker Outside Site")
                                     .font(.subheadline.bold())
                                 Text(alertMessage)
                                     .font(.caption)
@@ -65,9 +63,7 @@ struct SiteMapView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
-                    // MARK: - Interactive Map View
                     Map(position: $cameraPosition) {
-                        // User Location Marker
                         if let userLoc = viewModel.userLocation {
                             Annotation("My Location", coordinate: userLoc) {
                                 ZStack {
@@ -78,8 +74,15 @@ struct SiteMapView: View {
                             }
                         }
 
-                        // Project Pins & Geofence Circles
+                        // Render separate geofence zones for all projects
                         ForEach(viewModel.projects) { project in
+                            let isSelected = viewModel.selectedProjectName == project.name
+                            let isInside = isSelected && viewModel.isInsideGeofence
+
+                            MapCircle(center: project.coordinate, radius: viewModel.geofenceRadiusMeters)
+                                .foregroundStyle(isInside ? Color.green.opacity(0.2) : (isSelected ? Color.orange.opacity(0.2) : Color.blue.opacity(0.1)))
+                                .stroke(isInside ? Color.green : (isSelected ? Color.orange : Color.blue), lineWidth: isSelected ? 3 : 1.5)
+
                             Annotation(
                                 project.name,
                                 coordinate: project.coordinate,
@@ -87,16 +90,8 @@ struct SiteMapView: View {
                             ) {
                                 mapAnnotationButton(for: project)
                             }
-
-                            // Show visual geofence radius circle around selected project
-                            if viewModel.selectedProjectName == project.name {
-                                MapCircle(center: project.coordinate, radius: viewModel.geofenceRadiusMeters)
-                                    .foregroundStyle(viewModel.isInsideGeofence ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
-                                    .stroke(viewModel.isInsideGeofence ? Color.green : Color.orange, lineWidth: 2)
-                            }
                         }
 
-                        // Render Route Polyline if calculated
                         if !viewModel.routeCoordinates.isEmpty {
                             MapPolyline(coordinates: viewModel.routeCoordinates)
                                 .stroke(orange, lineWidth: 5)
@@ -120,7 +115,6 @@ struct SiteMapView: View {
                         .buttonStyle(.plain)
                     }
 
-                    // MARK: - Navigation Details Banner
                     if let time = viewModel.travelTime, let dist = viewModel.distanceText, let name = viewModel.selectedProjectName {
                         HStack {
                             Label("Route to \(name): \(dist) (\(time))", systemImage: "car.fill")
@@ -140,7 +134,6 @@ struct SiteMapView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
 
-                    // MARK: - Selected Project Details or Overview
                     if let project = viewModel.selectedProject {
                         projectDetailsWithActions(project)
                     } else {
@@ -149,7 +142,6 @@ struct SiteMapView: View {
 
                     Divider()
 
-                    // MARK: - Live Attendance Section
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Live Attendance Log")
@@ -173,7 +165,6 @@ struct SiteMapView: View {
                         .buttonStyle(.plain)
                     }
 
-                    // Attendance Record Feed
                     if viewModel.filteredAttendance.isEmpty {
                         ContentUnavailableView(
                             "No Records",
@@ -225,10 +216,14 @@ struct SiteMapView: View {
             }
         }
         .buttonStyle(.plain)
+        .onHover { isHovered in
+            viewModel.handleHover(isHovered: isHovered, for: project)
+        }
     }
 
     private func selectProject(_ project: ConstructionProject) {
         viewModel.selectedProjectName = project.name
+        viewModel.calculateRoute(to: project.coordinate)
         withAnimation {
             cameraPosition = .region(
                 MKCoordinateRegion(
@@ -267,7 +262,6 @@ struct SiteMapView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            // Live Worker Stats
             HStack {
                 Label("\(viewModel.currentSiteWorkerCount) Workers Active", systemImage: "person.3.fill")
                     .font(.subheadline.bold())
@@ -280,7 +274,6 @@ struct SiteMapView: View {
 
             ProgressView(value: project.progress).tint(orange)
 
-            // Action Buttons
             HStack(spacing: 12) {
                 Button {
                     showingAttendanceSheet = true

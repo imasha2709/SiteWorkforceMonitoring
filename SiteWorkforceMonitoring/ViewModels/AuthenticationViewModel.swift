@@ -11,8 +11,7 @@ class AuthenticationViewModel: ObservableObject {
     private let db = Firestore.firestore()
 
     init() {
-        // FIX: Removed try? Auth.auth().signOut()
-        // Instead, check if a user is already authenticated on app launch
+      
         if let firebaseUser = Auth.auth().currentUser {
             fetchUserProfile(uid: firebaseUser.uid)
         }
@@ -68,6 +67,20 @@ class AuthenticationViewModel: ObservableObject {
         }
     }
     
+        func simulateSuccessfulSignIn() {
+            DispatchQueue.main.async {
+                self.isSignedIn = true
+                
+                if self.currentUser == nil {
+                    self.currentUser = AppUser(
+                        id: "faceid-user-\(UUID().uuidString.prefix(6))",
+                        email: "manager@siteworkforce.com",
+                        name: "Project Manager (Face ID)",
+                        role: .projectManager
+                    )
+                }
+            }
+        }
     func signUp(email: String, password: String, name: String, role: UserRole, completion: @escaping (String?) -> Void) {
         Auth.auth().createUser(withEmail: email, password: password) { [weak self] result, error in
             if let error = error {

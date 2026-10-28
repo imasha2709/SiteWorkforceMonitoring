@@ -2,31 +2,23 @@ import SwiftUI
 import Combine
 import FirebaseFirestore
 import CoreLocation
+import UserNotifications
 
-// MARK: - Site Alert Model
 struct SiteAlert: Identifiable, Codable {
     @DocumentID var id: String?
     var title: String
     var message: String
-    var severity: String // "Warning", "Critical", "Info"
+    var severity: String
     var type: String
     var projectId: String?
     var isRead: Bool
     var createdAt: Timestamp?
     
     enum CodingKeys: String, CodingKey {
-        case id
-        case title
-        case message
-        case severity
-        case type
-        case projectId
-        case isRead
-        case createdAt
+        case id, title, message, severity, type, projectId, isRead, createdAt
     }
 }
 
-// MARK: - Dashboard ViewModel
 @MainActor
 final class DashboardViewModel: ObservableObject {
     @Published var totalWorkers: Int = 0
@@ -38,8 +30,10 @@ final class DashboardViewModel: ObservableObject {
     
     private let db = Firestore.firestore()
     private var listeners: [ListenerRegistration] = []
+    private var notifiedAlertIds: Set<String> = []
 
     init() {
+        requestNotificationPermission()
         setupListeners()
     }
 
@@ -47,8 +41,17 @@ final class DashboardViewModel: ObservableObject {
         listeners.forEach { $0.remove() }
     }
 
+    private func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if let error = error {
+                print("❌ Notification Permission Error: \(error.localizedDescription)")
+            } else {
+                print("🔔 Local Push Notifications Authorized: \(granted)")
+            }
+        }
+    }
+
     private func setupListeners() {
-        // 1. Listen to Workers collection
         let workerListener = db.collection("workers").addSnapshotListener { [weak self] snapshot, _ in
             guard let self = self, let docs = snapshot?.documents else { return }
             self.totalWorkers = docs.count
@@ -60,13 +63,11 @@ final class DashboardViewModel: ObservableObject {
             self.absentWorkers = max(0, self.totalWorkers - self.presentWorkers)
         }
         
-        // 2. Listen to Projects collection
         let projectListener = db.collection("projects").addSnapshotListener { [weak self] snapshot, _ in
             guard let docs = snapshot?.documents else { return }
             self?.activeProjects = docs.count
         }
         
-        // 3. Listen to Tasks collection
         let taskListener = db.collection("tasks").addSnapshotListener { [weak self] snapshot, _ in
             guard let docs = snapshot?.documents else { return }
             self?.pendingTasks = docs.filter { doc in
@@ -75,7 +76,6 @@ final class DashboardViewModel: ObservableObject {
             }.count
         }
 
-        // 4. Listen to Alerts collection
         let alertListener = db.collection("alerts")
             .order(by: "createdAt", descending: true)
             .limit(to: 5)
@@ -84,9 +84,23 @@ final class DashboardViewModel: ObservableObject {
                     print("❌ Error fetching alerts: \(error.localizedDescription)")
                     return
                 }
-                guard let documents = snapshot?.documents else { return }
-                self?.alerts = documents.compactMap { doc in
+                guard let snapshot = snapshot else { return }
+                
+                self?.alerts = snapshot.documents.compactMap { doc in
                     try? doc.data(as: SiteAlert.self)
+                }
+
+                // Fire local push notification only for newly added documents in real-time
+                for change in snapshot.documentChanges {
+                    if change.type == .added {
+                        if let alert = try? change.document.data(as: SiteAlert.self) {
+                            let alertId = alert.id ?? UUID().uuidString
+                            if !(self?.notifiedAlertIds.contains(alertId) ?? false) {
+                                self?.notifiedAlertIds.insert(alertId)
+                                self?.triggerLocalPushNotification(for: alert)
+                            }
+                        }
+                    }
                 }
             }
 
@@ -102,7 +116,30 @@ final class DashboardViewModel: ObservableObject {
             "isRead": false,
             "createdAt": FieldValue.serverTimestamp()
         ]
+        
         db.collection("alerts").addDocument(data: newAlertData)
+    }
+
+    func triggerLocalPushNotification(for alert: SiteAlert) {
+        let content = UNMutableNotificationContent()
+        content.title = "[\(alert.severity.uppercased())] \(alert.title)"
+        content.body = alert.message
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: alert.id ?? UUID().uuidString,
+            content: content,
+            trigger: trigger
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Failed to post local push notification: \(error.localizedDescription)")
+            } else {
+                print("✅ Local push notification scheduled successfully!")
+            }
+        }
     }
     
     func createNewWorker(name: String, role: String, siteId: String, status: AttendanceStatus) {
@@ -134,7 +171,6 @@ final class DashboardViewModel: ObservableObject {
     }
 }
 
-// MARK: - Dashboard View
 struct DashboardView: View {
     @StateObject private var model = DashboardViewModel()
     
@@ -151,7 +187,6 @@ struct DashboardView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
 
-                    // Header
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Site Workforce")
                             .font(.largeTitle.bold())
@@ -159,7 +194,6 @@ struct DashboardView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    // Main Site Banner Card
                     HStack {
                         Image(systemName: "building.2.fill")
                             .font(.title2)
@@ -183,7 +217,6 @@ struct DashboardView: View {
                     .background(orange.opacity(0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 16))
 
-                    // MARK: - Quick Actions Toolbar
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Quick Actions")
                             .font(.headline)
@@ -217,7 +250,6 @@ struct DashboardView: View {
                         }
                     }
 
-                    // MARK: - Live Alerts Section
                     if !model.alerts.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
@@ -244,7 +276,6 @@ struct DashboardView: View {
                         }
                     }
 
-                    // Today's Overview Grid
                     Text("Today's Overview")
                         .font(.title2.bold())
 
@@ -255,7 +286,6 @@ struct DashboardView: View {
                         dashboardCard(title: "Pending Tasks", value: "\(model.pendingTasks)", icon: "clock.fill")
                     }
 
-                    // Attendance Summary Progress Bar
                     Text("Attendance Summary")
                         .font(.title2.bold())
 
@@ -358,7 +388,6 @@ struct DashboardView: View {
     }
 }
 
-// MARK: - Alerts Detail Screen
 struct AlertsDetailView: View {
     @ObservedObject var viewModel: DashboardViewModel
     @State private var showingAddAlert = false
@@ -424,7 +453,6 @@ struct AlertsDetailView: View {
     }
 }
 
-// MARK: - Add Alert Modal View
 struct AddAlertModalView: View {
     @ObservedObject var viewModel: DashboardViewModel
     @Environment(\.dismiss) var dismiss
@@ -469,7 +497,6 @@ struct AddAlertModalView: View {
     }
 }
 
-// MARK: - Add Worker Modal View
 struct AddWorkerView: View {
     @ObservedObject var viewModel: DashboardViewModel
     @Environment(\.dismiss) var dismiss
@@ -528,7 +555,6 @@ struct AddWorkerView: View {
     }
 }
 
-// MARK: - Add Project Modal View
 struct AddProjectView: View {
     @ObservedObject var viewModel: DashboardViewModel
     @Environment(\.dismiss) var dismiss

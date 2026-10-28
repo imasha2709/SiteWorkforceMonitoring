@@ -11,14 +11,30 @@
 		9249B6DC308B63F800267E62 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 9249B6DB308B63F800267E62 /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		F07169093091CB7A0039CEC0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DF82B902307CA7EB0079F2A3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DF82B909307CA7EB0079F2A3;
+			remoteInfo = SiteWorkforceMonitoring;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		DF82B90A307CA7EB0079F2A3 /* SiteWorkforceMonitoring.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SiteWorkforceMonitoring.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F07169053091CB7A0039CEC0 /* SiteWorkforceMonitoringTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SiteWorkforceMonitoringTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DF82B90C307CA7EB0079F2A3 /* SiteWorkforceMonitoring */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = SiteWorkforceMonitoring;
+			sourceTree = "<group>";
+		};
+		F07169063091CB7A0039CEC0 /* SiteWorkforceMonitoringTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SiteWorkforceMonitoringTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -33,6 +49,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F07169023091CB7A0039CEC0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -40,6 +63,7 @@
 			isa = PBXGroup;
 			children = (
 				DF82B90C307CA7EB0079F2A3 /* SiteWorkforceMonitoring */,
+				F07169063091CB7A0039CEC0 /* SiteWorkforceMonitoringTests */,
 				DF82B90B307CA7EB0079F2A3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -48,6 +72,7 @@
 			isa = PBXGroup;
 			children = (
 				DF82B90A307CA7EB0079F2A3 /* SiteWorkforceMonitoring.app */,
+				F07169053091CB7A0039CEC0 /* SiteWorkforceMonitoringTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -79,6 +104,29 @@
 			productReference = DF82B90A307CA7EB0079F2A3 /* SiteWorkforceMonitoring.app */;
 			productType = "com.apple.product-type.application";
 		};
+		F07169043091CB7A0039CEC0 /* SiteWorkforceMonitoringTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F071690B3091CB7A0039CEC0 /* Build configuration list for PBXNativeTarget "SiteWorkforceMonitoringTests" */;
+			buildPhases = (
+				F07169013091CB7A0039CEC0 /* Sources */,
+				F07169023091CB7A0039CEC0 /* Frameworks */,
+				F07169033091CB7A0039CEC0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F071690A3091CB7A0039CEC0 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F07169063091CB7A0039CEC0 /* SiteWorkforceMonitoringTests */,
+			);
+			name = SiteWorkforceMonitoringTests;
+			packageProductDependencies = (
+			);
+			productName = SiteWorkforceMonitoringTests;
+			productReference = F07169053091CB7A0039CEC0 /* SiteWorkforceMonitoringTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -91,6 +139,10 @@
 				TargetAttributes = {
 					DF82B909307CA7EB0079F2A3 = {
 						CreatedOnToolsVersion = 26.2;
+					};
+					F07169043091CB7A0039CEC0 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = DF82B909307CA7EB0079F2A3;
 					};
 				};
 			};
@@ -112,12 +164,20 @@
 			projectRoot = "";
 			targets = (
 				DF82B909307CA7EB0079F2A3 /* SiteWorkforceMonitoring */,
+				F07169043091CB7A0039CEC0 /* SiteWorkforceMonitoringTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		DF82B908307CA7EB0079F2A3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F07169033091CB7A0039CEC0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -134,7 +194,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F07169013091CB7A0039CEC0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F071690A3091CB7A0039CEC0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DF82B909307CA7EB0079F2A3 /* SiteWorkforceMonitoring */;
+			targetProxy = F07169093091CB7A0039CEC0 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		DF82B913307CA7ED0079F2A3 /* Debug */ = {
@@ -266,6 +341,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "we use Face ID to quickly and securely log into your account.";
 				INFOPLIST_KEY_NSSiriUsageDescription = commands;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -299,6 +375,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "we use Face ID to quickly and securely log into your account.";
 				INFOPLIST_KEY_NSSiriUsageDescription = commands;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -319,6 +396,46 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F071690C3091CB7A0039CEC0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.SiteWorkforceMonitoringTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SiteWorkforceMonitoring.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SiteWorkforceMonitoring";
+			};
+			name = Debug;
+		};
+		F071690D3091CB7A0039CEC0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.SiteWorkforceMonitoringTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SiteWorkforceMonitoring.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SiteWorkforceMonitoring";
 			};
 			name = Release;
 		};
@@ -343,6 +460,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		F071690B3091CB7A0039CEC0 /* Build configuration list for PBXNativeTarget "SiteWorkforceMonitoringTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F071690C3091CB7A0039CEC0 /* Debug */,
+				F071690D3091CB7A0039CEC0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -350,8 +476,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 13.1.1;
+				kind = exactVersion;
+				version = 12.19.2;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

@@ -47,7 +47,7 @@ struct ProjectDetailView: View {
                         Text("Project Status").font(.headline).foregroundStyle(AppTheme.ink)
                         Spacer()
                         
-                        // MARK: - Interactive Status Picker Menu
+                      
                         Menu {
                             ForEach(availableStatuses, id: \.self) { status in
                                 Button {
@@ -128,7 +128,7 @@ struct ProjectDetailView: View {
                     }
                 }
 
-                // MARK: - Tasks Section
+                
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("Milestones & Tasks")

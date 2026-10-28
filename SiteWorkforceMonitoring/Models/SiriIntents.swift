@@ -1,6 +1,6 @@
 import AppIntents
 
-// MARK: - 1. Check Project Progress Intent
+
 struct CheckProjectProgressIntent: AppIntent {
     static var title: LocalizedStringResource = "Check Project Progress"
     static var description = IntentDescription("Checks the overall completion progress of your construction projects.")
@@ -11,7 +11,7 @@ struct CheckProjectProgressIntent: AppIntent {
     }
 }
 
-// MARK: - 2. Check Attendance Intent
+
 struct CheckAttendanceIntent: AppIntent {
     static var title: LocalizedStringResource = "Check Workforce Attendance"
     static var description = IntentDescription("Check how many workers are present today.")
@@ -23,10 +23,10 @@ struct CheckAttendanceIntent: AppIntent {
     }
 }
 
-// MARK: - 3. Unified App Shortcuts Provider
+
 struct ConstructionAppShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
-        // Project Progress Shortcut
+        
         AppShortcut(
             intent: CheckProjectProgressIntent(),
             phrases: [
@@ -37,7 +37,7 @@ struct ConstructionAppShortcuts: AppShortcutsProvider {
             systemImageName: "building.2.fill"
         )
         
-        // Workforce Attendance Shortcut
+       
         AppShortcut(
             intent: CheckAttendanceIntent(),
             phrases: [

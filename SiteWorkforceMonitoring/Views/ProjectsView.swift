@@ -5,7 +5,7 @@ struct ProjectsView: View {
     @StateObject private var viewModel = ProjectsViewModel()
     @State private var showingAddProject = false
 
-    // AppStorage key for the Dark Mode toggle in Settings
+
     @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
 
     private let columns = [GridItem(.adaptive(minimum: 290), spacing: 14)]
@@ -25,14 +25,14 @@ struct ProjectsView: View {
                         }
                         Spacer()
                         
-                        // 📊 NavigationLink to ProjectAnalyticsView
-                                                NavigationLink(destination: ProjectAnalyticsView(viewModel: viewModel)) {
-                                                    Image(systemName: "chart.bar.xaxis")
-                                                        .font(.subheadline.bold())
-                                                        .padding(10)
-                                                        .background(AppTheme.orange.opacity(0.15))
-                                                        .foregroundStyle(AppTheme.orange)
-                                                        .clipShape(Circle())
+                      
+                NavigationLink(destination: ProjectAnalyticsView(viewModel: viewModel)) {
+                        Image(systemName: "chart.bar.xaxis")
+                        .font(.subheadline.bold())
+                        .padding(10)
+                        .background(AppTheme.orange.opacity(0.15))
+                        .foregroundStyle(AppTheme.orange)
+                        .clipShape(Circle())
                                                 }
                         
                         Button {
@@ -55,7 +55,6 @@ struct ProjectsView: View {
                         summaryCard(title: "Need Attention", value: "\(viewModel.projectsNeedingAttention)", icon: "exclamationmark.triangle.fill", color: AppTheme.red)
                     }
 
-                    // Adaptive Search Bar for Light/Dark Mode
                     HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(AppTheme.secondary)
@@ -65,7 +64,6 @@ struct ProjectsView: View {
                     .background(Color(.tertiarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                    // Status Filters
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(viewModel.statusOptions, id: \.self) { status in
@@ -119,7 +117,7 @@ struct ProjectsView: View {
                 AddProjectModal(viewModel: viewModel)
             }
         }
-        // Controls dark/light appearance based on settings toggle
+        
         .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
     }
 
