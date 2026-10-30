@@ -38,7 +38,7 @@ Site Workforce & Project Monitoring is an iOS application designed for construct
 1. Clone the repository:
 
 ```bash
-git clone [https://github.com/imasha2709/SiteWorkforceMonitoring.git]
+git clone https://github.com/imasha2709/SiteWorkforceMonitoring.git
 ```
 
 2. Open the `.xcodeproj` or `.xcworkspace` file in Xcode.
